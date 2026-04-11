@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Yizer Admin - Add New Product</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#943700",
+                    "primary-fixed": "#ffdad6",
+                    "on-primary-fixed-variant": "#93000a",
+                    "tertiary-fixed": "#ffdbcd",
+                    "surface-tint": "#dc2626",
+                    "secondary-fixed": "#ffdad6",
+                    "on-surface": "#131b2e",
+                    "background": "#fffbff",
+                    "surface-container": "#fceee9",
+                    "on-primary-fixed": "#410002",
+                    "on-primary-container": "#ffffff",
+                    "on-background": "#131b2e",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#bc4800",
+                    "surface-container-high": "#f5e6e1",
+                    "error-container": "#ffdad6",
+                    "primary": "#dc2626",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#f0dfda",
+                    "secondary-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "inverse-surface": "#283044",
+                    "on-secondary-container": "#410002",
+                    "on-error-container": "#93000a",
+                    "secondary": "#775652",
+                    "surface-container-low": "#fff8f6",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#eef0ff",
+                    "on-secondary-fixed": "#410002",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-variant": "#f5dedb",
+                    "primary-fixed-dim": "#ffb4ab",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-surface-variant": "#534341",
+                    "primary-container": "#dc2626",
+                    "on-secondary-fixed-variant": "#5d3f3c",
+                    "surface-dim": "#e7d8d5",
+                    "outline": "#857371",
+                    "on-tertiary-container": "#ffede6",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "surface-bright": "#fff8f6",
+                    "inverse-primary": "#ffb4ab",
+                    "secondary-fixed-dim": "#e7bdb8",
+                    "outline-variant": "#d8c2be",
+                    "error": "#ba1a1a",
+                    "surface": "#fff8f6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom switch styling */
+        .switch-checkbox:checked + .switch-label {
+            background-color: #dc2626;
+        }
+        .switch-checkbox:checked + .switch-label::before {
+            transform: translateX(1.25rem);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<aside class="fixed left-0 top-0 h-full z-40 hidden md:flex flex-col bg-slate-50 dark:bg-slate-900 w-64 border-r-0">
+<div class="px-6 py-8 flex items-center gap-3">
+<span class="text-2xl font-black tracking-tight text-red-600">Yizer</span>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="text-[0.875rem]">Administrators</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-[0.875rem]">Customers</span>
+</a>
+<a class="flex items-center gap-3 text-red-600 font-bold border-r-4 border-red-600 bg-red-50/50 dark:bg-red-900/20 px-4 py-3 group" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="text-[0.875rem]">Products</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="text-[0.875rem]">Orders</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-[0.875rem]">Customizations</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span class="text-[0.875rem]">Variants</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<button class="w-full bg-primary text-on-primary py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                New Product
+            </button>
+</div>
+<div class="px-4 py-4 space-y-1 mb-4">
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-2 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="text-xs font-medium">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-2 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+<span class="text-xs font-medium">Support</span>
+</a>
+</div>
+</aside>
+<main class="md:ml-64 flex flex-col min-h-screen">
+<header class="sticky top-0 right-0 w-full z-30 flex justify-between items-center px-8 py-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary text-sm" placeholder="Search product catalogue..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-slate-600 dark:text-slate-400 hover:text-red-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-slate-600 dark:text-slate-400 hover:text-red-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/30"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold leading-tight">Yizer Admin User</p>
+<p class="text-[0.75rem] text-on-surface-variant">Admin Console</p>
+</div>
+<img alt="Yizer Admin User" class="w-10 h-10 rounded-full object-cover border-2 border-primary-fixed" data-alt="portrait of a professional male administrator in a modern office setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEzKSCtlMg7tTCzgXp7e9IEANcNwOLZy7b4eE5YbzYsEcRqolHTyLFNYidpgxstFQB77X7mderXET2N7QkVmT7KD7jOoLLRZer72BF1Ewl9NZtBMP2IqaC8QGYOz8qViau5mtSUZjlkwcYXEDL0O9y9Yc8RkYQxOrgN0xgeTPSPWfsOiHq-HI-2dZxz2RiiP7I0NBNCo4h-bJ8S93VHlroG7sxVq-ZQd8ynpnsXLfMBAx69h0puMThvf6UypuJKy4hgJ0omoZW5eA"/>
+</div>
+<button class="text-primary font-semibold text-sm hover:underline">Logout</button>
+</div>
+</header>
+<section class="p-8 max-w-6xl mx-auto w-full">
+<nav aria-label="Breadcrumb" class="flex items-center gap-2 mb-8">
+<a class="text-on-surface-variant text-[0.875rem] hover:text-primary transition-colors" href="#">Products</a>
+<span class="material-symbols-outlined text-sm text-outline-variant">chevron_right</span>
+<span class="text-on-surface font-semibold text-[0.875rem]">New Product</span>
+</nav>
+<div class="mb-10">
+<h1 class="text-[1.5rem] font-bold tracking-tight text-on-surface">Add New Product</h1>
+<p class="text-on-surface-variant text-[0.875rem] mt-1">Define your product specifications and inventory details.</p>
+</div>
+<form class="space-y-8">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0_20px_40px_-10px_rgba(19,27,46,0.04)] space-y-6">
+<div>
+<label class="block text-[0.75rem] font-medium text-on-surface-variant mb-2 ml-1" for="product-name">Product Name</label>
+<input class="w-full px-4 py-3 bg-surface-container-low border border-transparent focus:border-primary focus:ring-0 rounded-lg text-on-surface placeholder:text-outline-variant transition-all" id="product-name" placeholder="e.g. Italian Silk Summer Blazer" type="text"/>
+</div>
+<div>
+<label class="block text-[0.75rem] font-medium text-on-surface-variant mb-2 ml-1" for="product-desc">Description / Fabric Type</label>
+<textarea class="w-full px-4 py-3 bg-surface-container-low border border-transparent focus:border-primary focus:ring-0 rounded-lg text-on-surface placeholder:text-outline-variant transition-all" id="product-desc" placeholder="Describe the texture, weight, and composition of the fabric..." rows="6"></textarea>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-[0.75rem] font-medium text-on-surface-variant mb-2 ml-1" for="product-price">Price (USD)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">$</span>
+<input class="w-full pl-8 pr-4 py-3 bg-surface-container-low border border-transparent focus:border-primary focus:ring-0 rounded-lg text-on-surface transition-all" id="product-price" placeholder="0.00" type="number"/>
+</div>
+</div>
+<div class="flex items-end pb-3">
+<div class="flex items-center gap-4 px-4 py-1 h-[48px] bg-surface-container-low rounded-lg w-full">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input class="switch-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10" id="active-toggle" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-outline-variant cursor-pointer transition-colors duration-200 before:content-[''] before:absolute before:block before:w-3 before:h-3 before:bg-white before:rounded-full before:top-1 before:left-1 before:transition-transform before:duration-200" for="active-toggle"></label>
+</div>
+<label class="text-[0.875rem] font-medium text-on-surface cursor-pointer" for="active-toggle">Product Active</label>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl flex items-center gap-4">
+<span class="material-symbols-outlined text-primary" data-icon="info" style="font-variation-settings: 'FILL' 1;">info</span>
+<p class="text-[0.875rem] text-on-surface-variant italic">
+                                Tip: High-quality fabric descriptions improve search rankings by up to 40%.
+                            </p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_20px_40px_-10px_rgba(19,27,46,0.04)]">
+<h3 class="text-on-surface font-bold text-[1.125rem] mb-4">Product Media</h3>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-container-low transition-all">
+<div class="w-16 h-16 bg-primary-fixed rounded-full flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="cloud_upload">cloud_upload</span>
+</div>
+<p class="text-on-surface font-semibold text-sm">Click to upload or drag &amp; drop</p>
+<p class="text-on-surface-variant text-[0.75rem] mt-1">High-res JPG or PNG (max 5MB)</p>
+</div>
+<div class="mt-6 grid grid-cols-2 gap-3">
+<div class="aspect-square bg-surface-container-low rounded-lg relative overflow-hidden group">
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-white bg-error p-2 rounded-full shadow-lg" type="button">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+<img class="w-full h-full object-cover" data-alt="close-up detail of high-quality navy blue silk fabric texture with soft natural highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDucihwgbSUcxIs6at8SLP42-bldGt6ONoZVR6RonDrgbi3o-HEt15MH4crA-PWiolBAM-vVMrZoPUrGOY565-WJ3BnSMXqLSiMnTbIeMdPHq3NxSi69gi-b0yJRSHePEY0l63QXStfgLnbUAfL5-xjXgKHe8Fa_uFIjC2adJbvdUnOxUU_k-XP6yzpBr378KEWKxeCju7PNYB89jtMAGKfri2WBGykezzhs192Nua3-TTkY_uE-c5q9vum_7PRHvoqtigJAV8o5WI"/>
+</div>
+<div class="aspect-square bg-surface-container-low rounded-lg border-2 border-dashed border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-outline-variant">add</span>
+</div>
+</div>
+</div>
+<div class="bg-primary-container p-6 rounded-xl text-on-primary-container">
+<h4 class="font-bold mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">auto_fix</span>
+                                AI Suggestion
+                            </h4>
+<p class="text-xs leading-relaxed opacity-90">
+                                Based on your "Italian Silk" title, we recommend setting the "Dry Clean Only" tag in the variants section.
+                            </p>
+</div>
+</div>
+</div>
+<div class="flex flex-col sm:flex-row items-center justify-end gap-4 pt-8 border-t border-outline-variant/10">
+<button class="px-8 py-3 text-on-surface-variant font-semibold hover:bg-surface-container-low rounded-lg transition-colors w-full sm:w-auto" type="button">
+                        Cancel
+                    </button>
+<button class="px-12 py-3 bg-primary text-on-primary font-bold rounded-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all w-full sm:w-auto" type="submit">
+                        Save Product
+                    </button>
+</div>
+</form>
+</section>
+<footer class="mt-auto py-8 px-8 border-t border-outline-variant/10">
+<div class="flex flex-col md:flex-row justify-between items-center gap-4 text-on-surface-variant text-[0.75rem]">
+<p>© 2024 Yizer Editorial Curator System. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Documentation</a>
+</div>
+</div>
+</footer>
+</main>
+</body></html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#943700",
+                    "primary-fixed": "#ffdad6",
+                    "on-primary-fixed-variant": "#93000a",
+                    "tertiary-fixed": "#ffdbcd",
+                    "surface-tint": "#dc2626",
+                    "secondary-fixed": "#ffdad6",
+                    "on-surface": "#131b2e",
+                    "background": "#fffbff",
+                    "surface-container": "#fceee9",
+                    "on-primary-fixed": "#410002",
+                    "on-primary-container": "#ffffff",
+                    "on-background": "#131b2e",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#bc4800",
+                    "surface-container-high": "#f6e4df",
+                    "error-container": "#ffdad6",
+                    "primary": "#dc2626",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#f0dbd6",
+                    "secondary-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "inverse-surface": "#283044",
+                    "on-secondary-container": "#410002",
+                    "on-error-container": "#93000a",
+                    "secondary": "#954949",
+                    "surface-container-low": "#fff8f6",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#fceee9",
+                    "on-secondary-fixed": "#410002",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-variant": "#f4ddda",
+                    "primary-fixed-dim": "#ffb4ab",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-surface-variant": "#534341",
+                    "primary-container": "#93000a",
+                    "on-secondary-fixed-variant": "#773333",
+                    "surface-dim": "#e4d9d7",
+                    "outline": "#857371",
+                    "on-tertiary-container": "#ffede6",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "surface-bright": "#fffbff",
+                    "inverse-primary": "#ffb4ab",
+                    "secondary-fixed-dim": "#ffb4ab",
+                    "outline-variant": "#d8c2be",
+                    "error": "#ba1a1a",
+                    "surface": "#fffbff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "8px",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex">
+<!-- SideNavBar Component -->
+<aside class="fixed left-0 top-0 h-full z-40 hidden md:flex flex-col bg-slate-50 dark:bg-slate-900 w-64 border-r-0">
+<div class="px-6 py-8">
+<div class="text-2xl font-black tracking-tight text-primary">Yizer</div>
+<div class="text-[11px] uppercase tracking-widest font-bold text-slate-400 mt-1">Admin Console</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="text-sm font-medium">Administrators</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-sm font-medium">Customers</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="text-sm font-medium">Products</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="text-sm font-medium">Orders</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-sm font-medium">Customizations</span>
+</a>
+<!-- Active Tab: Variants -->
+<a class="text-primary font-bold border-r-4 border-primary bg-primary/5 px-4 py-3 flex items-center gap-3 rounded-l-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span class="text-sm">Variants</span>
+</a>
+</nav>
+<div class="p-4 mt-auto space-y-1">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-4 py-3 transition-colors flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="text-sm font-medium">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- TopNavBar Component -->
+<header class="sticky top-0 right-0 w-full z-30 flex justify-between items-center px-8 py-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<div class="flex items-center gap-8 flex-1">
+<div class="relative w-full max-w-md group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400" placeholder="Search orders or products..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3 pl-2">
+<div class="text-right hidden sm:block">
+<div class="text-sm font-bold text-on-surface leading-none">Admin User</div>
+<div class="text-[10px] text-on-surface-variant font-medium">Logout</div>
+</div>
+<img alt="User Avatar" class="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm" data-alt="close-up portrait of a professional male administrator in a modern office setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKi8JyW7SUQ_tAj_GtXpwPsESUM98jrR7zq0NKtsCNZwz66_WuBf70m5TnbjgMFTKbj0G51JcbcpeoPo2uqM4a7hTdMGn4LY6IMaqLimcqEV4uC71Z3yTNRujyb-pqZlorR2S_BweVLTAjSSQOaZsLgP9pwRQ0cojAyAorWfW9SNWiZ7BoEb9pVy8OsyKCjrEWciwb782VA0Wbpv93oN4_UnnvqnXp1LX2yBakcNB1PXGMGrMA_FAMDL5TvEVbG_RbX_SQRfrMLjU"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="flex-1 p-8 md:p-12 max-w-6xl mx-auto w-full">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 mb-8 text-sm font-medium">
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Products</a>
+<span class="material-symbols-outlined text-outline-variant text-base">chevron_right</span>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Variants</a>
+<span class="material-symbols-outlined text-outline-variant text-base">chevron_right</span>
+<span class="text-on-surface">New Variant</span>
+</nav>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- Form Content -->
+<div class="lg:col-span-7">
+<div class="mb-10">
+<h1 class="text-4xl font-black tracking-tight text-on-surface mb-3 leading-none">Add New Variant</h1>
+<p class="text-on-surface-variant body-md">Define a new SKU variant for your product catalog. High-resolution images and precise metadata improve customer conversion.</p>
+</div>
+<form class="space-y-8">
+<!-- Product Selection -->
+<div class="space-y-2">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Product Selection</label>
+<div class="relative group">
+<select class="w-full appearance-none bg-surface-container-lowest border-2 border-transparent ring-1 ring-outline-variant/15 rounded-lg px-4 py-4 pr-12 focus:ring-primary focus:border-primary transition-all text-on-surface">
+<option disabled="" selected="" value="">Select a base product...</option>
+<option value="1">Yizer Premium Hoodie</option>
+<option value="2">Minimalist Cotton T-Shirt</option>
+<option value="3">Tech-Shell Cargo Pants</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Color Field -->
+<div class="space-y-2">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Color</label>
+<input class="w-full bg-surface-container-lowest border-2 border-transparent ring-1 ring-outline-variant/15 rounded-lg px-4 py-4 focus:ring-primary focus:border-primary transition-all text-on-surface placeholder:text-slate-300" placeholder="e.g. Midnight Navy" type="text"/>
+</div>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Textura</label>
+<input class="w-full bg-surface-container-lowest border-2 border-transparent ring-1 ring-outline-variant/15 rounded-lg px-4 py-4 focus:ring-primary focus:border-primary transition-all text-on-surface placeholder:text-slate-300" placeholder="e.g. Midnight Navy" type="text"/>
+</div>
+<!-- Size Field -->
+<div class="space-y-2">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Talla/Size</label>
+<input class="w-full bg-surface-container-lowest border-2 border-transparent ring-1 ring-outline-variant/15 rounded-lg px-4 py-4 focus:ring-primary focus:border-primary transition-all text-on-surface placeholder:text-slate-300" placeholder="e.g. XL or 42" type="text"/>
+</div>
+</div>
+<!-- Variant Preview Section (UI Polish) -->
+<div class="p-6 bg-surface-container-low rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-4">
+<div class="h-12 w-12 bg-primary-fixed rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-on-surface">Live Preview Generation</h4>
+<p class="text-xs text-on-surface-variant">SKU will be generated automatically based on these attributes.</p>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4 pt-4">
+<button class="px-8 py-4 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-primary/20" type="submit">
+                            Save Variant
+                        </button>
+<button class="px-8 py-4 bg-transparent text-on-surface-variant font-bold rounded-lg hover:bg-surface-container-high transition-all active:scale-95" type="button">
+                            Cancel
+                        </button>
+</div>
+</form>
+</div>
+<!-- Instructional Sidebar (Editorial Layout) -->
+<div class="lg:col-span-5 space-y-6">
+<div class="bg-surface-container-lowest p-8 rounded-2xl shadow-[0_20px_40px_-10px_rgba(19,27,46,0.08)] relative overflow-hidden">
+<div class="relative z-10">
+<div class="text-primary font-black text-xs uppercase tracking-widest mb-4">Curator's Tip</div>
+<h3 class="text-xl font-bold text-on-surface mb-4">Consistency is Key</h3>
+<p class="text-on-surface-variant body-md leading-relaxed mb-6">
+                            Ensure variant names follow the global naming convention. Using standard color names like "Slate Gray" instead of "Dark Blue" helps in search indexing.
+                        </p>
+<div class="flex items-center gap-3">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-300"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-400"></div>
+</div>
+<span class="text-xs font-bold text-on-surface-variant">+12 active variants</span>
+</div>
+</div>
+<div class="absolute -right-12 -bottom-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
+</div>
+<!-- Image Showcase Card -->
+<div class="rounded-2xl overflow-hidden aspect-[4/3] relative group">
+<img alt="Sample Product" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="professional studio product photograph of a premium textile texture in charcoal gray with dramatic shadow and high-end lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpSxsCym1WL1SFti_BejgCHEM6b1ywmD5WIvjaHmERZMcN-LCu5h-3HmelxEGRUcPD7ji2y-t2YbKqSh-D7HzGtQEg9IdRtovNWoszorhx11ao1yflxJIkXgRwf2bA_gQFxiPBqwowbfUDpdzblJQl_pZ7Fm946blU6HsKZR_zGDP4x0rVjiR48sqJdBRVqIoFgzFz3qR1sNk3K1vbjermgRjOd1PRPa9gKHEicGZEDgyIk5T4ZpTKKgQfqfh5ciLa_t2VQHs_D5c"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-transparent to-transparent flex flex-col justify-end p-8">
+<span class="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-1">Visual Sample</span>
+<h4 class="text-white font-bold text-lg">Texture &amp; Material Reference</h4>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
