@@ -5,7 +5,9 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import DashboardLayout from './components/DashboardLayout';
 import Login from './pages/Login';
+import Administrators from './pages/Administrators';
 import NewAdministrator from './pages/NewAdministrator';
+import EditAdministrator from './pages/EditAdministrator';
 import NewVariant from './pages/NewVariant';
 import OrderDetails from './pages/OrderDetails';
 import ProductInventory from './pages/ProductInventory';
@@ -41,8 +43,9 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="/products" />} />
         <Route path="products" element={<ProductInventory />} />
         <Route path="products/new" element={<AddNewProduct />} />
-        <Route path="administrators" element={<ProductInventory />} />
+        <Route path="administrators" element={<Administrators />} />
         <Route path="administrators/new" element={<NewAdministrator />} />
+        <Route path="administrators/:id/edit" element={<EditAdministrator />} />
         <Route path="customers" element={<ProductInventory />} />
         <Route path="orders" element={<ProductInventory />} />
         <Route path="orders/:id" element={<OrderDetails />} />

@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Box, TextField, Button, Typography, Alert } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const NewAdministrator = () => {
+const EditAdministrator = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { token } = useAuth();
   const [formData, setFormData] = useState({
     nombre_completo: '',
     email: '',
@@ -13,9 +16,31 @@ const NewAdministrator = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { token } = useAuth();
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdministrator = async () => {
+      try {
+        const response = await axios.get(`/api/administradores/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setFormData({
+          nombre_completo: response.data.nombre_completo || '',
+          email: response.data.email || '',
+          telefono: response.data.telefono || '',
+          password: '',
+        });
+      } catch (err) {
+        setError('No se pudo cargar el administrador');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAdministrator();
+  }, [id, token]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,36 +50,45 @@ const NewAdministrator = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    setLoading(true);
 
-    if (!formData.nombre_completo || !formData.email || !formData.password) {
-      setError('Nombre completo, email y contraseña son obligatorios');
-      setLoading(false);
+    if (!formData.nombre_completo || !formData.email) {
+      setError('Nombre completo y email son obligatorios');
       return;
     }
 
     try {
-      const response = await axios.post('/api/administradores', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      await axios.put(
+        `/api/administradores/${id}`,
+        {
+          nombre_completo: formData.nombre_completo,
+          email: formData.email,
+          telefono: formData.telefono,
+          password: formData.password || undefined,
         },
-      });
-      setSuccess('Administrador creado exitosamente');
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      setSuccess('Administrador actualizado correctamente');
       setTimeout(() => {
         navigate('/administrators');
-      }, 2000);
+      }, 1200);
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear administrador');
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.error || 'Error al actualizar administrador');
     }
   };
+
+  if (loading) {
+    return <Typography sx={{ p: 3 }}>Cargando administrador...</Typography>;
+  }
 
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        Nuevo Administrador
+        Editar Administrador
       </Typography>
 
       <form onSubmit={handleSubmit}>
@@ -87,32 +121,23 @@ const NewAdministrator = () => {
           />
 
           <TextField
-            label="Contraseña"
+            label="Contraseña (dejar vacío para no cambiar)"
             name="password"
             type="password"
             value={formData.password}
             onChange={handleChange}
             fullWidth
-            required
           />
 
           {error && <Alert severity="error">{error}</Alert>}
           {success && <Alert severity="success">{success}</Alert>}
 
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              type="button"
-              onClick={() => navigate('/administrators')}
-              variant="outlined"
-            >
-              Cancelar
+            <Button type="button" variant="outlined" onClick={() => navigate('/administrators')}>
+              Volver
             </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-            >
-              {loading ? 'Creando...' : 'Crear Administrador'}
+            <Button type="submit" variant="contained">
+              Guardar cambios
             </Button>
           </Box>
         </Box>
@@ -121,4 +146,4 @@ const NewAdministrator = () => {
   );
 };
 
-export default NewAdministrator;
+export default EditAdministrator;
