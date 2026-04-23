@@ -1,32 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, TextField, Button, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Box, Typography, TextField, Button, Checkbox, FormControlLabel } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const NewVariant = () => {
+const EditVariant = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    id_producto: '',
     color: '',
     talla: '',
     stock: 0,
     activo: true,
   });
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchVariant = async () => {
       try {
-        const response = await axios.get('/api/productos');
-        setProducts(response.data);
-      } catch (err) {
-        console.error('Error fetching products:', err);
+        const response = await axios.get(`/api/variantes/${id}`);
+        setFormData({
+          color: response.data.color || '',
+          talla: response.data.talla || '',
+          stock: response.data.stock || 0,
+          activo: response.data.activo || true,
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching variant:', error);
+        setError('Error fetching variant');
+        setLoading(false);
       }
     };
-    fetchProducts();
-  }, []);
+    fetchVariant();
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -41,42 +48,25 @@ const NewVariant = () => {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`/api/productos/${formData.id_producto}/variantes`, {
-        color: formData.color,
-        talla: formData.talla,
-        stock: formData.stock,
-        activo: formData.activo,
-      });
+      await axios.put(`/api/variantes/${id}`, formData);
       navigate('/variants');
-    } catch (err) {
-      console.error('Error creating variant:', err);
-      setError('Error creating variant');
+    } catch (error) {
+      console.error('Error updating variant:', error);
+      setError('Error updating variant');
     } finally {
       setLoading(false);
     }
   };
 
+  if (loading) return <Typography>Loading...</Typography>;
+
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Add New Variant
+        Edit Variant
       </Typography>
       {error && <Typography color="error">{error}</Typography>}
       <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField
-          select
-          label="Product"
-          name="id_producto"
-          value={formData.id_producto}
-          onChange={handleChange}
-          required
-        >
-          {products.map((product) => (
-            <MenuItem key={product.id} value={product.id}>
-              {product.nombre}
-            </MenuItem>
-          ))}
-        </TextField>
         <TextField
           label="Color"
           name="color"
@@ -110,7 +100,7 @@ const NewVariant = () => {
         />
         <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
           <Button type="submit" variant="contained" color="primary" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Variant'}
+            {loading ? 'Saving...' : 'Save'}
           </Button>
           <Button variant="outlined" onClick={() => navigate('/variants')}>
             Cancel
@@ -121,4 +111,4 @@ const NewVariant = () => {
   );
 };
 
-export default NewVariant;
+export default EditVariant;

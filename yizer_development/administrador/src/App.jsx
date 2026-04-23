@@ -1,4 +1,7 @@
-import React from 'react';
+import axios from 'axios';
+
+// Set axios base URL
+axios.defaults.baseURL = 'http://localhost:3036';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -9,10 +12,13 @@ import Administrators from './pages/Administrators';
 import NewAdministrator from './pages/NewAdministrator';
 import EditAdministrator from './pages/EditAdministrator';
 import NewVariant from './pages/NewVariant';
+import Variants from './pages/Variants';
+import EditVariant from './pages/EditVariant';
 import OrderDetails from './pages/OrderDetails';
 import ProductInventory from './pages/ProductInventory';
 import AddNewProduct from './pages/AddNewProduct';
-import Variants from './pages/Variants';
+import EditProduct from './pages/EditProduct';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const theme = createTheme({
   typography: {
@@ -22,14 +28,16 @@ const theme = createTheme({
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AuthProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AuthProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -43,6 +51,7 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="/products" />} />
         <Route path="products" element={<ProductInventory />} />
         <Route path="products/new" element={<AddNewProduct />} />
+        <Route path="products/:id/edit" element={<EditProduct />} />
         <Route path="administrators" element={<Administrators />} />
         <Route path="administrators/new" element={<NewAdministrator />} />
         <Route path="administrators/:id/edit" element={<EditAdministrator />} />
@@ -51,6 +60,7 @@ const AppRoutes = () => {
         <Route path="orders/:id" element={<OrderDetails />} />
         <Route path="variants" element={<Variants />} />
         <Route path="variants/new" element={<NewVariant />} />
+        <Route path="variants/:id/edit" element={<EditVariant />} />
       </Route>
       <Route path="*" element={<Navigate to={token ? "/products" : "/login"} />} />
     </Routes>

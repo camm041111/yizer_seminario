@@ -46,6 +46,7 @@ router.delete('/productos/:id', requireAuth, requireAdmin, productos.eliminar);
 
 router.get('/productos/:idProducto/variantes', variantes.listarPorProducto);
 router.post('/productos/:idProducto/variantes', requireAuth, requireAdmin, variantes.crear);
+router.get('/variantes', variantes.listarTodas);
 router.get('/variantes/:id', variantes.obtenerPorId);
 router.put('/variantes/:id', requireAuth, requireAdmin, variantes.actualizar);
 router.delete('/variantes/:id', requireAuth, requireAdmin, variantes.eliminar);

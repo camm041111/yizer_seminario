@@ -1,21 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, TextField, Button, Alert, FormControlLabel, Switch } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
-const AddNewProduct = () => {
+const EditProduct = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { token } = useAuth();
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
     precio: '',
     activo: true,
   });
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { token } = useAuth();
-  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`/api/productos/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        setFormData({
+          nombre: response.data.nombre || '',
+          descripcion: response.data.descripcion || '',
+          precio: response.data.precio?.toString() || '',
+          activo: response.data.activo ?? true,
+        });
+        setError('');
+      } catch (err) {
+        setError('No se pudo cargar el producto');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [id, token]);
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -35,10 +58,9 @@ const AddNewProduct = () => {
       return;
     }
 
-    setLoading(true);
     try {
-      await axios.post(
-        '/api/productos',
+      await axios.put(
+        `/api/productos/${id}`,
         {
           nombre: formData.nombre,
           descripcion: formData.descripcion,
@@ -52,19 +74,21 @@ const AddNewProduct = () => {
           },
         }
       );
-      setSuccess('Producto creado correctamente');
+      setSuccess('Producto actualizado correctamente');
       setTimeout(() => navigate('/products'), 1200);
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear producto');
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.error || 'Error al actualizar producto');
     }
   };
+
+  if (loading) {
+    return <Typography sx={{ p: 3 }}>Cargando producto...</Typography>;
+  }
 
   return (
     <Box sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        Nuevo producto
+        Editar producto
       </Typography>
 
       <form onSubmit={handleSubmit}>
@@ -111,10 +135,10 @@ const AddNewProduct = () => {
 
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button type="button" variant="outlined" onClick={() => navigate('/products')}>
-              Cancelar
+              Volver
             </Button>
-            <Button type="submit" variant="contained" disabled={loading}>
-              {loading ? 'Guardando...' : 'Guardar'}
+            <Button type="submit" variant="contained">
+              Guardar
             </Button>
           </Box>
         </Box>
@@ -123,4 +147,4 @@ const AddNewProduct = () => {
   );
 };
 
-export default AddNewProduct;
+export default EditProduct;

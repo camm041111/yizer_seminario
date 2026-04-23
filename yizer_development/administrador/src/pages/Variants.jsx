@@ -1,63 +1,66 @@
-import React, { useState } from 'react';
-import { Box, Typography, Paper, Chip, Button, Avatar, IconButton, MenuItem, TextField } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Paper, Button, IconButton, MenuItem, TextField } from '@mui/material';
 import {
-  Search as SearchIcon,
-  FilterList as FilterIcon,
-  MoreVert as MoreVertIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
-  ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Variants = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     product: '',
     size: '',
     color: '',
   });
+  const [variants, setVariants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const variants = [
-    {
-      id: 'VAR-001',
-      product: 'Yizer Premium Hoodie',
-      color: 'Midnight Navy',
-      colorCode: '#1a1a2e',
-      size: 'XL',
-      stock: 45,
-    },
-    {
-      id: 'VAR-002',
-      product: 'Yizer Premium Hoodie',
-      color: 'Charcoal Grey',
-      colorCode: '#36454f',
-      size: 'L',
-      stock: 32,
-    },
-    {
-      id: 'VAR-003',
-      product: 'Minimalist Cotton T-Shirt',
-      color: 'Pure White',
-      colorCode: '#ffffff',
-      size: 'M',
-      stock: 0,
-    },
-    {
-      id: 'VAR-004',
-      product: 'Tech-Shell Cargo Pants',
-      color: 'Olive Green',
-      colorCode: '#556b2f',
-      size: '32',
-      stock: 18,
-    },
-  ];
+  useEffect(() => {
+    const fetchVariants = async () => {
+      try {
+        const response = await axios.get('/api/variantes');
+        setVariants(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching variants:', error);
+        setLoading(false);
+      }
+    };
+    fetchVariants();
+  }, []);
+
+  const filteredVariants = variants.filter(variant => {
+    return (
+      (filters.product === '' || variant.id_producto.toString() === filters.product) &&
+      (filters.size === '' || variant.talla === filters.size) &&
+      (filters.color === '' || variant.color === filters.color)
+    );
+  });
+
+  const uniqueColors = [...new Set(variants.map(v => v.color))];
+  const uniqueSizes = [...new Set(variants.map(v => v.talla))];
+  const uniqueProducts = [...new Set(variants.map(v => ({ id: v.id_producto, name: v.producto_nombre })))].map(p => ({ value: p.id.toString(), label: p.name }));
 
   const stats = [
-    { label: 'Total Variants', value: '1,482', color: '#131b2e' },
-    { label: 'Color Options', value: '24', color: '#131b2e' },
-    { label: 'Out of Stock', value: '18', color: '#ba1a1a' },
+    { label: 'Total Variants', value: variants.length.toString(), color: '#131b2e' },
+    { label: 'Unique Colors', value: uniqueColors.length.toString(), color: '#131b2e' },
+    { label: 'Out of Stock', value: variants.filter(v => v.stock === 0).length.toString(), color: '#ba1a1a' },
   ];
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`/api/variantes/${id}`);
+      setVariants(variants.filter(v => v.id_variante !== id));
+    } catch (error) {
+      console.error('Error deleting variant:', error);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <Box sx={{ maxWidth: 1280, mx: 'auto' }}>
@@ -127,6 +130,7 @@ const Variants = () => {
             <TextField
               select
               size="small"
+              label="Product"
               value={filters.product}
               onChange={(e) => setFilters({ ...filters, product: e.target.value })}
               sx={{
@@ -138,14 +142,17 @@ const Variants = () => {
               }}
             >
               <MenuItem value="">All Products</MenuItem>
-              <MenuItem value="1">Yizer Premium Hoodie</MenuItem>
-              <MenuItem value="2">Minimalist Cotton T-Shirt</MenuItem>
-              <MenuItem value="3">Tech-Shell Cargo Pants</MenuItem>
+              {uniqueProducts.map((product) => (
+                <MenuItem key={product.value} value={product.value}>
+                  {product.label}
+                </MenuItem>
+              ))}
             </TextField>
 
             <TextField
               select
               size="small"
+              label="Size"
               value={filters.size}
               onChange={(e) => setFilters({ ...filters, size: e.target.value })}
               sx={{
@@ -157,16 +164,17 @@ const Variants = () => {
               }}
             >
               <MenuItem value="">All Sizes</MenuItem>
-              <MenuItem value="XS">XS</MenuItem>
-              <MenuItem value="S">S</MenuItem>
-              <MenuItem value="M">M</MenuItem>
-              <MenuItem value="L">L</MenuItem>
-              <MenuItem value="XL">XL</MenuItem>
+              {uniqueSizes.map((size) => (
+                <MenuItem key={size} value={size}>
+                  {size}
+                </MenuItem>
+              ))}
             </TextField>
 
             <TextField
               select
               size="small"
+              label="Color"
               value={filters.color}
               onChange={(e) => setFilters({ ...filters, color: e.target.value })}
               sx={{
@@ -178,37 +186,26 @@ const Variants = () => {
               }}
             >
               <MenuItem value="">All Colors</MenuItem>
-              <MenuItem value="navy">Midnight Navy</MenuItem>
-              <MenuItem value="grey">Charcoal Grey</MenuItem>
-              <MenuItem value="white">Pure White</MenuItem>
-              <MenuItem value="olive">Olive Green</MenuItem>
+              {uniqueColors.map((color) => (
+                <MenuItem key={color} value={color}>
+                  {color}
+                </MenuItem>
+              ))}
             </TextField>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="outlined"
-              sx={{
-                borderColor: '#d8c2be',
-                color: '#534341',
-                '&:hover': { borderColor: '#d8c2be', bgcolor: 'rgba(241, 225, 223, 0.3)' },
-              }}
-            >
-              <FilterIcon sx={{ mr: 1, fontSize: 18 }} />
-              More Filters
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              sx={{
-                bgcolor: '#dc2626',
-                fontWeight: 600,
-                '&:hover': { bgcolor: '#dc2626', opacity: 0.9 },
-              }}
-            >
-              Add Variant
-            </Button>
-          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{
+              bgcolor: '#dc2626',
+              fontWeight: 600,
+              '&:hover': { bgcolor: '#dc2626', opacity: 0.9 },
+            }}
+            onClick={() => navigate('/variants/new')}
+          >
+            Add Variant
+          </Button>
         </Box>
 
         {/* Table */}
@@ -237,60 +234,28 @@ const Variants = () => {
               </tr>
             </thead>
             <tbody>
-              {variants.map((variant) => (
+              {filteredVariants.map((variant) => (
                 <tr
-                  key={variant.id}
+                  key={variant.id_variante}
                   style={{ borderBottom: '1px solid rgba(216, 194, 191, 0.2)' }}
                 >
                   <td style={{ padding: '16px 24px', fontSize: '0.875rem', color: '#534341', fontWeight: 600 }}>
-                    {variant.id}
+                    {variant.id_variante}
                   </td>
                   <td style={{ padding: '16px 24px' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar
-                        variant="rounded"
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          bgcolor: '#fceae8',
-                          color: '#dc2626',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        IMG
-                      </Avatar>
-                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#131b2e' }}>
-                        {variant.product}
-                      </Typography>
-                    </Box>
+                    <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#131b2e' }}>
+                      {variant.producto_nombre}
+                    </Typography>
                   </td>
                   <td style={{ padding: '16px 24px' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          bgcolor: variant.colorCode,
-                          border: variant.colorCode === '#ffffff' ? '1px solid #d8c2be' : 'none',
-                        }}
-                      />
-                      <Typography sx={{ fontSize: '0.875rem', color: '#131b2e' }}>
-                        {variant.color}
-                      </Typography>
-                    </Box>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#131b2e' }}>
+                      {variant.color}
+                    </Typography>
                   </td>
                   <td style={{ padding: '16px 24px' }}>
-                    <Chip
-                      label={variant.size}
-                      sx={{
-                        bgcolor: '#fee2e2',
-                        color: '#991b1b',
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                      }}
-                    />
+                    <Typography sx={{ fontSize: '0.875rem', color: '#131b2e' }}>
+                      {variant.talla}
+                    </Typography>
                   </td>
                   <td style={{ padding: '16px 24px' }}>
                     <Typography
@@ -304,10 +269,10 @@ const Variants = () => {
                     </Typography>
                   </td>
                   <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                    <IconButton size="small" sx={{ color: '#534341', mr: 1 }}>
+                    <IconButton size="small" sx={{ color: '#534341', mr: 1 }} onClick={() => navigate(`/variants/${variant.id_variante}/edit`)}>
                       <EditIcon fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" sx={{ color: '#534341' }}>
+                    <IconButton size="small" sx={{ color: '#534341' }} onClick={() => handleDelete(variant.id_variante)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </td>
@@ -316,68 +281,7 @@ const Variants = () => {
             </tbody>
           </table>
         </Box>
-
-        {/* Pagination */}
-        <Box
-          sx={{
-            p: 3,
-            borderTop: '1px solid rgba(216, 194, 191, 0.3)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography sx={{ fontSize: '0.875rem', color: '#534341' }}>
-            Showing 1-4 of 1,482 variants
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton size="small" sx={{ color: '#534341' }}>
-              <ChevronLeftIcon />
-            </IconButton>
-            {[1, 2, 3, '...', 14].map((page, index) => (
-              <Button
-                key={index}
-                size="small"
-                sx={{
-                  minWidth: 32,
-                  height: 32,
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontWeight: page === 1 ? 700 : 500,
-                  color: page === 1 ? '#dc2626' : '#534341',
-                  bgcolor: page === 1 ? 'rgba(220, 38, 38, 0.05)' : 'transparent',
-                  '&:hover': { bgcolor: page === 1 ? 'rgba(220, 38, 38, 0.05)' : 'rgba(241, 225, 223, 0.3)' },
-                }}
-              >
-                {page}
-              </Button>
-            ))}
-            <IconButton size="small" sx={{ color: '#534341' }}>
-              <ChevronRightIcon />
-            </IconButton>
-          </Box>
-        </Box>
       </Paper>
-
-      {/* Mobile FAB */}
-      <Button
-        variant="contained"
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          width: 56,
-          height: 56,
-          minWidth: 'auto',
-          borderRadius: '50%',
-          bgcolor: '#dc2626',
-          boxShadow: '0 10px 15px -3px rgba(220, 38, 38, 0.3)',
-          display: { xs: 'flex', md: 'none' },
-          '&:hover': { bgcolor: '#dc2626', opacity: 0.9 },
-        }}
-      >
-        <AddIcon />
-      </Button>
     </Box>
   );
 };

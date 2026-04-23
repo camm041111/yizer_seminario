@@ -1,5 +1,20 @@
 const db = require('../config/db');
 
+async function listarTodas(req, res) {
+  try {
+    const [rows] = await db.query(
+      `SELECT v.id_variante, v.id_producto, p.nombre as producto_nombre, v.color, v.talla, v.stock, v.activo
+       FROM variantes_producto v
+       JOIN productos_base p ON v.id_producto = p.id_producto
+       ORDER BY v.id_variante`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al listar variantes' });
+  }
+}
+
 async function listarPorProducto(req, res) {
   const { idProducto } = req.params;
   try {
@@ -117,6 +132,7 @@ async function eliminar(req, res) {
 }
 
 module.exports = {
+  listarTodas,
   listarPorProducto,
   obtenerPorId,
   crear,
