@@ -1,82 +1,87 @@
-// Vista de Inicio - Página pública principal
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../config/api';
+import { api, assetUrl } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Inicio() {
+  const { isAuthenticated, user, logout } = useAuth();
   const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [estado, setEstado] = useState('cargando');
 
-  // Cargar productos destacados del catálogo
   useEffect(() => {
-    cargarCatalogo();
+    api.get('/catalogo')
+      .then((data) => {
+        setProductos((data.productos || []).slice(0, 4));
+        setEstado('listo');
+      })
+      .catch(() => setEstado('error'));
   }, []);
 
-  async function cargarCatalogo() {
-    try {
-      setLoading(true);
-      const data = await api.get('/catalogo');
-      // Mostrar solo los primeros 6 productos
-      setProductos(data.productos?.slice(0, 6) || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <div>
-      {/* Header/Navegación */}
-      <nav>
-        <div>
-          <h1>Yizer</h1>
-        </div>
-        <div>
-          <Link to="/">Inicio</Link>
-          <Link to="/catalogo">Catálogo</Link>
-          <Link to="/login">Login</Link>
-        </div>
-      </nav>
+    <main>
+      <header className="topbar">
+        <Link className="brand" to="/">Yizer</Link>
+        <nav className="navlinks">
+          <Link to="/catalogo">Catalogo</Link>
+          {isAuthenticated ? <Link to="/dashboard">Mi cuenta</Link> : <Link to="/login">Entrar</Link>}
+          {isAuthenticated && <button className="link-button" onClick={logout}>Salir</button>}
+        </nav>
+      </header>
 
-      {/* Hero Section */}
-      <section>
-        <h2>Bienvenido a Yizer</h2>
-        <p>Tu tienda de confianza para productos personalizados</p>
-        <Link to="/catalogo">Ver Catálogo</Link>
+      <section className="hero">
+        <div className="hero-content">
+          <p className="eyebrow">Playeras y prendas personalizadas</p>
+          <h1>Yizer</h1>
+          <p>
+            Elige una prenda, selecciona color y talla, agrega tus ideas de personalizacion y
+            conserva tus pedidos desde tu cuenta.
+          </p>
+          <div className="actions">
+            <Link className="button primary" to="/catalogo">Explorar catalogo</Link>
+            <Link className="button secondary" to={isAuthenticated ? '/dashboard' : '/login'}>
+              {isAuthenticated ? `Hola, ${user?.nombre_completo || user?.email}` : 'Crear cuenta'}
+            </Link>
+          </div>
+        </div>
+        <div className="hero-panel">
+          <span>Pedido</span>
+          <strong>Catalogo + personalizacion + seguimiento</strong>
+          <small>Flujo conectado con productos, variantes, pedidos y personalizaciones del servidor.</small>
+        </div>
       </section>
 
-      {/* Productos Destacados */}
-      <section>
-        <h3>Productos Destacados</h3>
-        
-        {loading && <p>Cargando...</p>}
-        {error && <p>Error: {error}</p>}
-        
-        {!loading && !error && productos.length > 0 && (
+      <section className="section">
+        <div className="section-head">
           <div>
-            {productos.map(producto => (
-              <div key={producto.id_producto}>
-                <img src={producto.imagen_absoluta || producto.imagen_url} alt={producto.nombre} />
-                <h4>{producto.nombre}</h4>
-                <p>{producto.tipo_tela}</p>
-                <p>Precio: ${producto.precio_base}</p>
-                <Link to={`/catalogo?producto=${producto.id_producto}`}>Ver detalles</Link>
-              </div>
+            <p className="eyebrow">Disponibles ahora</p>
+            <h2>Productos destacados</h2>
+          </div>
+          <Link to="/catalogo">Ver todos</Link>
+        </div>
+
+        {estado === 'cargando' && <p className="muted">Cargando productos...</p>}
+        {estado === 'error' && <p className="notice error">No se pudo cargar el catalogo.</p>}
+        {estado === 'listo' && (
+          <div className="product-grid">
+            {productos.map((producto) => (
+              <article className="product-card" key={producto.id_producto}>
+                <div className="product-image">
+                  {producto.imagen_url ? (
+                    <img src={assetUrl(producto.imagen_absoluta || producto.imagen_url)} alt={producto.nombre} />
+                  ) : (
+                    <span>Yizer</span>
+                  )}
+                </div>
+                <div className="product-info">
+                  <h3>{producto.nombre}</h3>
+                  <p>{producto.tipo_tela || 'Sin descripcion'}</p>
+                  <strong>${Number(producto.precio_base || 0).toFixed(2)}</strong>
+                </div>
+              </article>
             ))}
           </div>
         )}
-
-        {!loading && !error && productos.length === 0 && (
-          <p>No hay productos disponibles</p>
-        )}
       </section>
-
-      {/* Footer */}
-      <footer>
-        <p>&copy; 2026 Yizer. Todos los derechos reservados.</p>
-      </footer>
-    </div>
+    </main>
   );
 }

@@ -10,12 +10,12 @@ import {
   AppBar,
   Toolbar,
   IconButton,
-  InputBase,
-  Badge,
   Avatar,
   Typography,
   Button,
   Paper,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   AdminPanelSettings as AdminIcon,
@@ -23,9 +23,8 @@ import {
   Inventory as InventoryIcon,
   ShoppingCart as CartIcon,
   Layers as LayersIcon,
-  Search as SearchIcon,
-  Notifications as NotificationsIcon,
   Logout as LogoutIcon,
+  Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -43,7 +42,9 @@ const DashboardLayout = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -54,11 +55,111 @@ const DashboardLayout = () => {
     navigate('/login');
   };
 
+  const handleNavigate = (path) => {
+    navigate(path);
+    setMobileOpen(false);
+  };
+
+  const drawerContent = (
+    <>
+      <Box sx={{ px: 3, py: 4 }}>
+        <Box
+          sx={{
+            width: 52,
+            height: 52,
+            borderRadius: 2,
+            bgcolor: '#d71920',
+            color: '#fff',
+            display: 'grid',
+            placeItems: 'center',
+            fontWeight: 900,
+            fontSize: 24,
+            mb: 2,
+            boxShadow: '0 14px 30px rgba(215, 25, 32, 0.28)',
+          }}
+        >
+          Y
+        </Box>
+        <Typography variant="h5" sx={{ color: '#fff', lineHeight: 1 }}>
+          Yizer
+        </Typography>
+        <Typography variant="caption" sx={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#ffd7d9', mt: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          Panel administrador
+        </Typography>
+      </Box>
+
+      <List sx={{ flex: 1, px: 2, overflowY: 'auto' }}>
+        {menuItems.map((item) => (
+          <ListItem
+            key={item.text}
+            onClick={() => handleNavigate(item.path)}
+            sx={{
+              mb: 0.75,
+              borderRadius: 2,
+              cursor: 'pointer',
+              color: isActive(item.path) ? '#fff' : '#ffe9ea',
+              fontWeight: isActive(item.path) ? 800 : 600,
+              bgcolor: isActive(item.path) ? 'rgba(255, 255, 255, 0.16)' : 'transparent',
+              border: '1px solid',
+              borderColor: isActive(item.path) ? 'rgba(255, 255, 255, 0.22)' : 'transparent',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.12)',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 'inherit' }} />
+          </ListItem>
+        ))}
+      </List>
+
+      <Box sx={{ p: 2 }}>
+        <Paper
+          sx={{
+            p: 2,
+            bgcolor: 'rgba(255, 255, 255, 0.1)',
+            borderColor: 'rgba(255, 255, 255, 0.14)',
+            boxShadow: 'none',
+            color: '#fff',
+            mb: 1.5,
+          }}
+        >
+          <Typography sx={{ fontSize: '0.8rem', fontWeight: 800 }}>
+            Sesión activa
+          </Typography>
+          <Typography sx={{ fontSize: '0.78rem', color: '#ffd7d9', mt: 0.5, wordBreak: 'break-word' }}>
+            {user?.email || user?.nombre_completo || 'Administrador'}
+          </Typography>
+        </Paper>
+        <Button
+          fullWidth
+          onClick={handleLogout}
+          startIcon={<LogoutIcon />}
+          sx={{
+            justifyContent: 'flex-start',
+            color: '#fff',
+            bgcolor: 'rgba(255, 255, 255, 0.12)',
+            border: '1px solid rgba(255, 255, 255, 0.16)',
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.18)',
+            },
+          }}
+        >
+          Cerrar sesión
+        </Button>
+      </Box>
+    </>
+  );
+
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fffbff' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff7f7' }}>
       {/* Sidebar */}
       <Drawer
-        variant="permanent"
+        variant={desktop ? 'permanent' : 'temporary'}
+        open={desktop || mobileOpen}
+        onClose={() => setMobileOpen(false)}
         sx={{
           width: drawerWidth,
           flexShrink: 0,
@@ -66,131 +167,66 @@ const DashboardLayout = () => {
             width: drawerWidth,
             boxSizing: 'border-box',
             borderRight: 'none',
-            bgcolor: 'rgba(255, 241, 241, 0.3)',
+            bgcolor: '#8f1017',
+            backgroundImage: 'linear-gradient(180deg, #b5121b 0%, #7c0d13 100%)',
+            boxShadow: '12px 0 34px rgba(80, 10, 16, 0.24)',
           },
-          display: { xs: 'none', md: 'flex' },
         }}
       >
-        <Box sx={{ px: 3, py: 4 }}>
-          <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: '-0.025em', color: '#dc2626' }}>
-            Yizer
-          </Typography>
-          <Typography variant="caption" sx={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: '#534341', mt: 0.5, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Admin Console
-          </Typography>
-        </Box>
-
-        <List sx={{ flex: 1, px: 2, overflowY: 'auto' }}>
-          {menuItems.map((item) => (
-            <ListItem
-              key={item.text}
-              onClick={() => navigate(item.path)}
-              sx={{
-                mb: 0.5,
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                color: isActive(item.path) ? '#dc2626' : '#534341',
-                fontWeight: isActive(item.path) ? 700 : 500,
-                bgcolor: isActive(item.path) ? 'rgba(220, 38, 38, 0.05)' : 'transparent',
-                borderRight: isActive(item.path) ? '4px solid #dc2626' : 'none',
-                '&:hover': {
-                  bgcolor: 'rgba(220, 38, 38, 0.05)',
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.875rem' }} />
-            </ListItem>
-          ))}
-        </List>
-
-        
+        {drawerContent}
       </Drawer>
 
       {/* Main Content */}
-      <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column', ml: { md: `${drawerWidth}px` } }}>
+      <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: { md: `calc(100% - ${drawerWidth}px)` } }}>
         {/* Header */}
         <AppBar
           position="sticky"
           elevation={0}
           sx={{
-            bgcolor: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            bgcolor: 'rgba(255, 250, 250, 0.86)',
+            color: '#241316',
+            backdropFilter: 'blur(16px)',
+            borderBottom: '1px solid rgba(139, 30, 36, 0.12)',
+            boxShadow: '0 8px 28px rgba(98, 18, 24, 0.06)',
             zIndex: 30,
           }}
         >
-          <Toolbar sx={{ justifyContent: 'space-between' }}>
-            <Box sx={{ flex: 1, maxWidth: 512 }}>
-              <Paper
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  bgcolor: '#fff1f1',
-                  borderRadius: '9999px',
-                  px: 2,
-                  py: 0.5,
-                }}
-              >
-                <SearchIcon sx={{ color: '#857371', mr: 1 }} />
-                <InputBase
-                  placeholder="Search across console..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{ flex: 1, fontSize: '0.875rem' }}
-                />
-              </Paper>
+          <Toolbar sx={{ justifyContent: 'space-between', gap: 2, minHeight: 72 }}>
+            <IconButton
+              onClick={() => setMobileOpen(true)}
+              sx={{ display: { xs: 'inline-flex', md: 'none' }, color: '#a70f16' }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            <Box sx={{ flex: 1 }}>
+              <Typography sx={{ fontSize: '0.78rem', fontWeight: 800, color: '#a70f16', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Panel administrador
+              </Typography>
+              <Typography variant="h6" sx={{ color: '#241316', lineHeight: 1.2 }}>
+                Gestión Yizer
+              </Typography>
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 3 }}>
-              <IconButton sx={{ color: '#534341', position: 'relative' }}>
-                <NotificationsIcon />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    width: 8,
-                    height: 8,
-                    bgcolor: '#ba1a1a',
-                    borderRadius: '50%',
-                    border: '2px solid white',
-                  }}
-                />
-              </IconButton>
-
-              <Box sx={{ width: 1, height: 24, bgcolor: 'rgba(216, 194, 191, 0.3)', mx: 1 }} />
-
-              <Button
-                onClick={handleLogout}
-                sx={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: '#dc2626',
-                  textTransform: 'none',
-                  '&:hover': { bgcolor: 'transparent', color: '#ef4444' },
-                }}
-              >
-                Logout
-              </Button>
-
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, ml: { xs: 0, md: 3 } }}>
               <Avatar
                 src={user?.avatar}
                 sx={{
                   width: 40,
                   height: 40,
-                  border: '2px solid #ffdad6',
-                  p: 0.5,
+                  bgcolor: '#d71920',
+                  border: '2px solid #ffd7d9',
+                  fontWeight: 800,
                 }}
-              />
+              >
+                {(user?.nombre_completo || user?.email || 'A').charAt(0).toUpperCase()}
+              </Avatar>
             </Box>
           </Toolbar>
         </AppBar>
 
         {/* Page Content */}
-        <Box sx={{ flex: 1, p: { xs: 4, md: 6, lg: 8 } }}>
+        <Box sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4, lg: 5 } }}>
           <Outlet />
         </Box>
       </Box>

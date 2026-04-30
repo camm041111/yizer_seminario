@@ -2,6 +2,61 @@ const db = require('../config/db');
 
 const ESTADOS = new Set(['pendiente', 'en_proceso', 'enviado', 'entregado', 'cancelado']);
 
+async function ajustarStock(conn, idVariante, cantidad) {
+  const delta = Number(cantidad);
+  if (!Number.isFinite(delta) || delta === 0) return true;
+
+  if (delta < 0) {
+    const requerido = Math.abs(delta);
+    const [result] = await conn.query(
+      `UPDATE variantes_producto
+       SET stock = stock + ?
+       WHERE id_variante = ? AND stock >= ?`,
+      [delta, idVariante, requerido]
+    );
+    return result.affectedRows > 0;
+  }
+
+  const [result] = await conn.query(
+    'UPDATE variantes_producto SET stock = stock + ? WHERE id_variante = ?',
+    [delta, idVariante]
+  );
+  return result.affectedRows > 0;
+}
+
+async function obtenerStockVariante(conn, idVariante) {
+  const [rows] = await conn.query(
+    `SELECT v.id_variante, v.stock, v.color, v.talla, p.nombre AS producto_nombre
+     FROM variantes_producto v
+     JOIN productos_base p ON p.id_producto = v.id_producto
+     WHERE v.id_variante = ?`,
+    [idVariante]
+  );
+  return rows[0] || null;
+}
+
+async function ajustarStockPedido(conn, idPedido, multiplicador) {
+  const [detalles] = await conn.query(
+    'SELECT id_variante, cantidad FROM detalle_pedidos WHERE id_pedido = ?',
+    [idPedido]
+  );
+
+  for (const detalle of detalles) {
+    const ok = await ajustarStock(
+      conn,
+      detalle.id_variante,
+      Number(detalle.cantidad) * multiplicador
+    );
+    if (!ok) {
+      const variante = await obtenerStockVariante(conn, detalle.id_variante);
+      const nombre = variante
+        ? `${variante.producto_nombre} ${variante.color}/${variante.talla}`
+        : `variante ${detalle.id_variante}`;
+      throw new Error(`Stock insuficiente para ${nombre}`);
+    }
+  }
+}
+
 async function listar(req, res) {
   const idCliente = req.query.id_cliente;
   const estado = req.query.estado;
@@ -34,6 +89,7 @@ async function obtenerDetallePedido(idPedido) {
             v.id_producto, v.color, v.talla,
             pb.nombre AS producto_nombre, pb.imagen_url AS producto_imagen_url, pb.tipo_tela AS producto_tipo_tela,
             per.tipo_personalizacion AS personalizacion_tipo, per.texto_personalizado AS personalizacion_texto, per.url_imagen AS personalizacion_url,
+            per.url_vista_previa AS personalizacion_vista_previa_url,
             per.color_impresion AS personalizacion_color, per.posicion AS personalizacion_posicion
      FROM detalle_pedidos d
      INNER JOIN variantes_producto v ON v.id_variante = d.id_variante
@@ -134,13 +190,17 @@ async function crear(req, res) {
           return res.status(403).json({ error: 'No puede usar esa personalización' });
         }
       }
-      const [v] = await conn.query(
-        'SELECT id_variante FROM variantes_producto WHERE id_variante = ?',
-        [linea.id_variante]
-      );
-      if (!v.length) {
+      const variante = await obtenerStockVariante(conn, linea.id_variante);
+      if (!variante) {
         await conn.rollback();
         return res.status(400).json({ error: `Variante ${linea.id_variante} no existe` });
+      }
+      const stockOk = await ajustarStock(conn, linea.id_variante, -Number(linea.cantidad));
+      if (!stockOk) {
+        await conn.rollback();
+        return res.status(400).json({
+          error: `Stock insuficiente para ${variante.producto_nombre} ${variante.color}/${variante.talla}. Disponible: ${variante.stock}`,
+        });
       }
 
       await conn.query(
@@ -211,9 +271,31 @@ async function actualizar(req, res) {
     return res.status(400).json({ error: 'No hay campos para actualizar' });
   }
   vals.push(req.params.id);
+  const conn = await db.getConnection();
   try {
-    const [result] = await db.query(`UPDATE pedidos SET ${partes.join(', ')} WHERE id_pedido = ?`, vals);
+    await conn.beginTransaction();
+    const [prevRows] = await conn.query(
+      'SELECT id_pedido, estado FROM pedidos WHERE id_pedido = ? FOR UPDATE',
+      [req.params.id]
+    );
+    if (!prevRows.length) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
+    const estadoAnterior = prevRows[0].estado;
+    if (estado !== undefined && estado !== estadoAnterior) {
+      if (estado === 'cancelado' && estadoAnterior !== 'cancelado') {
+        await ajustarStockPedido(conn, req.params.id, 1);
+      } else if (estadoAnterior === 'cancelado' && estado !== 'cancelado') {
+        await ajustarStockPedido(conn, req.params.id, -1);
+      }
+    }
+
+    const [result] = await conn.query(`UPDATE pedidos SET ${partes.join(', ')} WHERE id_pedido = ?`, vals);
     if (!result.affectedRows) return res.status(404).json({ error: 'Pedido no encontrado' });
+    await conn.commit();
+
     const [rows] = await db.query(
       `SELECT id_pedido, id_cliente, fecha_pedido, estado, total, direccion_envio, notas FROM pedidos WHERE id_pedido = ?`,
       [req.params.id]
@@ -222,8 +304,13 @@ async function actualizar(req, res) {
     pedido.detalles = await obtenerDetallePedido(pedido.id_pedido);
     res.json(pedido);
   } catch (err) {
+    await conn.rollback();
     console.error(err);
-    res.status(500).json({ error: 'Error al actualizar pedido' });
+    res.status(err.message?.startsWith('Stock insuficiente') ? 400 : 500).json({
+      error: err.message?.startsWith('Stock insuficiente') ? err.message : 'Error al actualizar pedido',
+    });
+  } finally {
+    conn.release();
   }
 }
 
@@ -243,7 +330,7 @@ async function agregarDetalle(req, res) {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
-    const [p] = await conn.query('SELECT id_pedido FROM pedidos WHERE id_pedido = ?', [idPedido]);
+    const [p] = await conn.query('SELECT id_pedido, estado FROM pedidos WHERE id_pedido = ? FOR UPDATE', [idPedido]);
     if (!p.length) {
       await conn.rollback();
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -259,13 +346,19 @@ async function agregarDetalle(req, res) {
         return res.status(400).json({ error: 'Personalización no existe' });
       }
     }
-    const [v] = await conn.query(
-      'SELECT id_variante FROM variantes_producto WHERE id_variante = ?',
-      [id_variante]
-    );
-    if (!v.length) {
+    const variante = await obtenerStockVariante(conn, id_variante);
+    if (!variante) {
       await conn.rollback();
       return res.status(400).json({ error: 'Variante no existe' });
+    }
+    if (p[0].estado !== 'cancelado') {
+      const stockOk = await ajustarStock(conn, id_variante, -Number(cantidad));
+      if (!stockOk) {
+        await conn.rollback();
+        return res.status(400).json({
+          error: `Stock insuficiente para ${variante.producto_nombre} ${variante.color}/${variante.talla}. Disponible: ${variante.stock}`,
+        });
+      }
     }
 
     const [ins] = await conn.query(
@@ -305,6 +398,9 @@ async function actualizarDetalle(req, res) {
   const partes = [];
   const vals = [];
   if (cantidad !== undefined) {
+    if (Number(cantidad) <= 0) {
+      return res.status(400).json({ error: 'La cantidad debe ser mayor que 0' });
+    }
     partes.push('cantidad = ?');
     vals.push(cantidad);
   }
@@ -325,7 +421,10 @@ async function actualizarDetalle(req, res) {
   try {
     await conn.beginTransaction();
     const [det] = await conn.query(
-      'SELECT id_pedido FROM detalle_pedidos WHERE id_detalle = ?',
+      `SELECT d.id_pedido, d.id_variante, d.cantidad, p.estado
+       FROM detalle_pedidos d
+       JOIN pedidos p ON p.id_pedido = d.id_pedido
+       WHERE d.id_detalle = ? FOR UPDATE`,
       [req.params.idDetalle]
     );
     if (!det.length) {
@@ -340,6 +439,22 @@ async function actualizarDetalle(req, res) {
       if (!pers.length) {
         await conn.rollback();
         return res.status(400).json({ error: 'Personalización no existe' });
+      }
+    }
+
+    if (cantidad !== undefined && det[0].estado !== 'cancelado') {
+      const diferencia = Number(cantidad) - Number(det[0].cantidad);
+      if (diferencia !== 0) {
+        const stockOk = await ajustarStock(conn, det[0].id_variante, -diferencia);
+        if (!stockOk) {
+          const variante = await obtenerStockVariante(conn, det[0].id_variante);
+          await conn.rollback();
+          return res.status(400).json({
+            error: variante
+              ? `Stock insuficiente para ${variante.producto_nombre} ${variante.color}/${variante.talla}. Disponible: ${variante.stock}`
+              : 'Stock insuficiente',
+          });
+        }
       }
     }
 
@@ -377,7 +492,10 @@ async function eliminarDetalle(req, res) {
   try {
     await conn.beginTransaction();
     const [det] = await conn.query(
-      'SELECT id_pedido FROM detalle_pedidos WHERE id_detalle = ?',
+      `SELECT d.id_pedido, d.id_variante, d.cantidad, p.estado
+       FROM detalle_pedidos d
+       JOIN pedidos p ON p.id_pedido = d.id_pedido
+       WHERE d.id_detalle = ? FOR UPDATE`,
       [req.params.idDetalle]
     );
     if (!det.length) {
@@ -385,6 +503,9 @@ async function eliminarDetalle(req, res) {
       return res.status(404).json({ error: 'Detalle no encontrado' });
     }
     const idPedido = det[0].id_pedido;
+    if (det[0].estado !== 'cancelado') {
+      await ajustarStock(conn, det[0].id_variante, Number(det[0].cantidad));
+    }
     await conn.query('DELETE FROM detalle_pedidos WHERE id_detalle = ?', [req.params.idDetalle]);
 
     const [sumRows] = await conn.query(
@@ -408,13 +529,30 @@ async function eliminar(req, res) {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Solo administradores' });
   }
+  const conn = await db.getConnection();
   try {
-    const [result] = await db.query('DELETE FROM pedidos WHERE id_pedido = ?', [req.params.id]);
+    await conn.beginTransaction();
+    const [pedido] = await conn.query(
+      'SELECT id_pedido, estado FROM pedidos WHERE id_pedido = ? FOR UPDATE',
+      [req.params.id]
+    );
+    if (!pedido.length) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+    if (pedido[0].estado !== 'cancelado') {
+      await ajustarStockPedido(conn, req.params.id, 1);
+    }
+    const [result] = await conn.query('DELETE FROM pedidos WHERE id_pedido = ?', [req.params.id]);
     if (!result.affectedRows) return res.status(404).json({ error: 'Pedido no encontrado' });
+    await conn.commit();
     res.status(204).send();
   } catch (err) {
+    await conn.rollback();
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar pedido' });
+  } finally {
+    conn.release();
   }
 }
 

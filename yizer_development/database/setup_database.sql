@@ -42,6 +42,7 @@ CREATE TABLE personalizaciones (
     tipo_personalizacion VARCHAR(20) NOT NULL CHECK (tipo_personalizacion IN ('texto', 'imagen', 'ambos')),
     texto_personalizado VARCHAR(255),
     url_imagen VARCHAR(500),
+    url_vista_previa VARCHAR(500),
     color_impresion VARCHAR(50),
     posicion VARCHAR(50),
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

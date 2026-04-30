@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Alert } from '@mui/material';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Alert, InputAdornment } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon } from '@mui/icons-material';
 
 const Administrators = () => {
   const [administrators, setAdministrators] = useState([]);
@@ -45,7 +45,7 @@ const Administrators = () => {
         },
       });
       setAdministrators(administrators.filter(admin => admin.id_admin !== id));
-    } catch (err) {
+    } catch {
       setError('Error al eliminar administrador');
     }
   };
@@ -58,12 +58,18 @@ const Administrators = () => {
   if (loading) return <Typography>Cargando...</Typography>;
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Administradores</Typography>
+    <Box sx={{ maxWidth: 1280, mx: 'auto' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: 3, gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+        <Box>
+          <Typography variant="h4">Administradores</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+            Gestión de usuarios con acceso al panel.
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           color="primary"
+          startIcon={<AddIcon />}
           onClick={() => navigate('/administrators/new')}
         >
           Nuevo Administrador
@@ -76,13 +82,20 @@ const Administrators = () => {
         placeholder="Buscar por nombre o email..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon color="primary" />
+            </InputAdornment>
+          ),
+        }}
         sx={{ mb: 3, width: '100%', maxWidth: 400 }}
       />
 
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+            <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Nombre Completo</TableCell>
               <TableCell>Email</TableCell>

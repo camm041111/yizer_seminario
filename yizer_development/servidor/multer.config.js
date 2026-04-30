@@ -3,21 +3,28 @@ const path = require('path');
 const multer = require('multer');
 
 const uploadDir = path.join(__dirname, 'uploads', 'productos');
+const personalizacionesUploadDir = path.join(__dirname, 'uploads', 'personalizaciones');
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const safe = `${Date.now()}-${Math.random().toString(36).slice(2, 12)}${ext}`;
-    cb(null, safe);
-  },
-});
+if (!fs.existsSync(personalizacionesUploadDir)) {
+  fs.mkdirSync(personalizacionesUploadDir, { recursive: true });
+}
+
+function crearStorage(destinationDir) {
+  return multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      cb(null, destinationDir);
+    },
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+      const safe = `${Date.now()}-${Math.random().toString(36).slice(2, 12)}${ext}`;
+      cb(null, safe);
+    },
+  });
+}
 
 function fileFilter(_req, file, cb) {
   if (file.mimetype && file.mimetype.startsWith('image/')) {
@@ -27,7 +34,13 @@ function fileFilter(_req, file, cb) {
 }
 
 const uploadProducto = multer({
-  storage,
+  storage: crearStorage(uploadDir),
+  limits: { fileSize: Number(process.env.UPLOAD_MAX_MB || 5) * 1024 * 1024 },
+  fileFilter,
+});
+
+const uploadPersonalizacion = multer({
+  storage: crearStorage(personalizacionesUploadDir),
   limits: { fileSize: Number(process.env.UPLOAD_MAX_MB || 5) * 1024 * 1024 },
   fileFilter,
 });
@@ -35,6 +48,10 @@ const uploadProducto = multer({
 /** Ruta pública guardada en BD, p. ej. /uploads/productos/archivo.webp */
 function urlPublicaProducto(filename) {
   return `/uploads/productos/${filename}`;
+}
+
+function urlPublicaPersonalizacion(filename) {
+  return `/uploads/personalizaciones/${filename}`;
 }
 
 /** Elimina archivo previo si la URL apunta a nuestra carpeta de productos. */
@@ -60,10 +77,25 @@ function singleImagenProducto(req, res, next) {
   });
 }
 
+function singleImagenPersonalizacion(req, res, next) {
+  uploadPersonalizacion.single('imagen')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        error: err.message || 'Error al subir el archivo',
+      });
+    }
+    next();
+  });
+}
+
 module.exports = {
   uploadDir,
+  personalizacionesUploadDir,
   uploadProducto,
+  uploadPersonalizacion,
   singleImagenProducto,
+  singleImagenPersonalizacion,
   urlPublicaProducto,
+  urlPublicaPersonalizacion,
   eliminarArchivoImagenProducto,
 };

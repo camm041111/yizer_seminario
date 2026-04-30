@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, TextField, Button, Checkbox, FormControlLabel } from '@mui/material';
+import { Alert, Box, Typography, TextField, Button, Checkbox, FormControlLabel, Paper } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -58,15 +58,19 @@ const EditVariant = () => {
     }
   };
 
-  if (loading) return <Typography>Loading...</Typography>;
+  if (loading) return <Typography>Cargando variante...</Typography>;
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Edit Variant
-      </Typography>
-      {error && <Typography color="error">{error}</Typography>}
-      <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box sx={{ maxWidth: 720, mx: 'auto' }}>
+      <Paper sx={{ p: { xs: 3, sm: 4 } }}>
+        <Typography variant="h4">
+          Editar variante
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5, mb: 3 }}>
+          Actualiza color, talla, stock y disponibilidad.
+        </Typography>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
           label="Color"
           name="color"
@@ -100,13 +104,14 @@ const EditVariant = () => {
         />
         <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
           <Button type="submit" variant="contained" color="primary" disabled={loading}>
-            {loading ? 'Saving...' : 'Save'}
+            {loading ? 'Guardando...' : 'Guardar'}
           </Button>
           <Button variant="outlined" onClick={() => navigate('/variants')}>
-            Cancel
+            Cancelar
           </Button>
         </Box>
-      </Box>
+        </Box>
+      </Paper>
     </Box>
   );
 };

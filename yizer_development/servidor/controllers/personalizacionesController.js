@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { urlPublicaPersonalizacion } = require('../multer.config');
 
 const TIPOS = new Set(['texto', 'imagen', 'ambos']);
 
@@ -6,7 +7,7 @@ async function listar(req, res) {
   const idCliente = req.query.id_cliente;
   try {
     let sql = `SELECT id_personalizacion, id_cliente, tipo_personalizacion, texto_personalizado, url_imagen,
-      color_impresion, posicion, fecha_creacion FROM personalizaciones`;
+      url_vista_previa, color_impresion, posicion, fecha_creacion FROM personalizaciones`;
     const params = [];
     if (req.user.role === 'cliente') {
       sql += ' WHERE id_cliente = ?';
@@ -28,7 +29,7 @@ async function obtenerPorId(req, res) {
   try {
     const [rows] = await db.query(
       `SELECT id_personalizacion, id_cliente, tipo_personalizacion, texto_personalizado, url_imagen,
-        color_impresion, posicion, fecha_creacion FROM personalizaciones WHERE id_personalizacion = ?`,
+        url_vista_previa, color_impresion, posicion, fecha_creacion FROM personalizaciones WHERE id_personalizacion = ?`,
       [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Personalización no encontrada' });
@@ -51,6 +52,7 @@ async function crear(req, res) {
     tipo_personalizacion,
     texto_personalizado,
     url_imagen,
+    url_vista_previa,
     color_impresion,
     posicion,
   } = req.body;
@@ -66,20 +68,21 @@ async function crear(req, res) {
   }
   try {
     const [result] = await db.query(
-      `INSERT INTO personalizaciones (id_cliente, tipo_personalizacion, texto_personalizado, url_imagen, color_impresion, posicion)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO personalizaciones (id_cliente, tipo_personalizacion, texto_personalizado, url_imagen, url_vista_previa, color_impresion, posicion)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         idClienteFinal,
         tipo_personalizacion,
         texto_personalizado ?? null,
         url_imagen ?? null,
+        url_vista_previa ?? null,
         color_impresion ?? null,
         posicion ?? null,
       ]
     );
     const [rows] = await db.query(
       `SELECT id_personalizacion, id_cliente, tipo_personalizacion, texto_personalizado, url_imagen,
-        color_impresion, posicion, fecha_creacion FROM personalizaciones WHERE id_personalizacion = ?`,
+        url_vista_previa, color_impresion, posicion, fecha_creacion FROM personalizaciones WHERE id_personalizacion = ?`,
       [result.insertId]
     );
     res.status(201).json(rows[0]);
@@ -89,12 +92,22 @@ async function crear(req, res) {
   }
 }
 
+async function subirImagen(req, res) {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Archivo requerido (campo de formulario: imagen)' });
+  }
+  res.status(201).json({
+    url_imagen: urlPublicaPersonalizacion(req.file.filename),
+  });
+}
+
 async function actualizar(req, res) {
   const {
     id_cliente,
     tipo_personalizacion,
     texto_personalizado,
     url_imagen,
+    url_vista_previa,
     color_impresion,
     posicion,
   } = req.body;
@@ -136,6 +149,10 @@ async function actualizar(req, res) {
     partes.push('url_imagen = ?');
     vals.push(url_imagen);
   }
+  if (url_vista_previa !== undefined) {
+    partes.push('url_vista_previa = ?');
+    vals.push(url_vista_previa);
+  }
   if (color_impresion !== undefined) {
     partes.push('color_impresion = ?');
     vals.push(color_impresion);
@@ -156,7 +173,7 @@ async function actualizar(req, res) {
     if (!result.affectedRows) return res.status(404).json({ error: 'Personalización no encontrada' });
     const [rows] = await db.query(
       `SELECT id_personalizacion, id_cliente, tipo_personalizacion, texto_personalizado, url_imagen,
-        color_impresion, posicion, fecha_creacion FROM personalizaciones WHERE id_personalizacion = ?`,
+        url_vista_previa, color_impresion, posicion, fecha_creacion FROM personalizaciones WHERE id_personalizacion = ?`,
       [req.params.id]
     );
     res.json(rows[0]);
@@ -191,6 +208,7 @@ module.exports = {
   listar,
   obtenerPorId,
   crear,
+  subirImagen,
   actualizar,
   eliminar,
 };

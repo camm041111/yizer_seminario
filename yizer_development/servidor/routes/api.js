@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { requireAuth, requireAdmin, requireAdminOrOwnCliente } = require('../middleware/auth');
-const { singleImagenProducto } = require('../multer.config');
+const { singleImagenProducto, singleImagenPersonalizacion } = require('../multer.config');
 const auth = require('../controllers/authController');
 const administradores = require('../controllers/administradoresController');
 const clientes = require('../controllers/clientesController');
@@ -53,6 +53,7 @@ router.delete('/variantes/:id', requireAuth, requireAdmin, variantes.eliminar);
 
 router.get('/personalizaciones', requireAuth, personalizaciones.listar);
 router.get('/personalizaciones/:id', requireAuth, personalizaciones.obtenerPorId);
+router.post('/personalizaciones/imagen', requireAuth, singleImagenPersonalizacion, personalizaciones.subirImagen);
 router.post('/personalizaciones', requireAuth, personalizaciones.crear);
 router.put('/personalizaciones/:id', requireAuth, personalizaciones.actualizar);
 router.delete('/personalizaciones/:id', requireAuth, personalizaciones.eliminar);

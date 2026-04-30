@@ -9,14 +9,37 @@ function signToken(payload) {
   return jwt.sign(payload, getSecret(), { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 }
 
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function buildAdminResponse(admin) {
+  const token = signToken({
+    role: 'admin',
+    id: admin.id,
+    email: admin.email,
+  });
+
+  return {
+    token,
+    user: {
+      role: 'admin',
+      id: admin.id,
+      email: admin.email,
+      nombre_completo: admin.nombre_completo,
+    },
+  };
+}
+
 async function loginAdmin(req, res) {
-  const { email, password } = req.body;
+  const email = normalizeEmail(req.body.email);
+  const password = req.body.password;
   if (!email || !password) {
     return res.status(400).json({ error: 'email y password son obligatorios' });
   }
   try {
     const [rows] = await db.query(
-      'SELECT id_admin, nombre_completo, email, password_hash FROM administradores WHERE email = ?',
+      'SELECT id_admin, nombre_completo, email, password_hash FROM administradores WHERE LOWER(email) = ?',
       [email]
     );
     const row = rows[0];
@@ -24,9 +47,9 @@ async function loginAdmin(req, res) {
     let needsHashUpgrade = false;
     if (row?.password_hash) {
       if (String(row.password_hash).startsWith('$2')) {
-        ok = await bcrypt.compare(password, row.password_hash);
+        ok = await bcrypt.compare(String(password), row.password_hash);
       } else {
-        ok = password === row.password_hash;
+        ok = String(password) === row.password_hash;
         if (ok) {
           needsHashUpgrade = true;
         }
@@ -34,45 +57,34 @@ async function loginAdmin(req, res) {
     }
 
     if (ok && needsHashUpgrade) {
-      const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      const hashedPassword = await bcrypt.hash(String(password), BCRYPT_ROUNDS);
       await db.query('UPDATE administradores SET password_hash = ? WHERE id_admin = ?', [
         hashedPassword,
         row.id_admin,
       ]);
     }
 
-    if (!ok) {
-      const envAdminEmail = process.env.ADMIN_EMAIL;
-      const envAdminPassword = process.env.ADMIN_PASSWORD;
-      if (envAdminEmail && envAdminPassword && email === envAdminEmail && password === envAdminPassword) {
-        const token = signToken({ role: 'admin', id: row?.id_admin ?? 0, email });
-        return res.json({
-          token,
-          user: {
-            role: 'admin',
-            id: row?.id_admin ?? 0,
-            email,
-            nombre_completo: row?.nombre_completo ?? 'Administrador',
-          },
-        });
-      }
-      return res.status(401).json({ error: 'Credenciales inválidas' });
-    }
-
-    const token = signToken({
-      role: 'admin',
-      id: row.id_admin,
-      email: row.email,
-    });
-    res.json({
-      token,
-      user: {
-        role: 'admin',
+    if (ok) {
+      return res.json(buildAdminResponse({
         id: row.id_admin,
         email: row.email,
         nombre_completo: row.nombre_completo,
-      },
-    });
+      }));
+    }
+
+    if (!row) {
+      const envAdminEmail = normalizeEmail(process.env.ADMIN_EMAIL);
+      const envAdminPassword = process.env.ADMIN_PASSWORD;
+      if (envAdminEmail && envAdminPassword && email === envAdminEmail && String(password) === envAdminPassword) {
+        return res.json(buildAdminResponse({
+          id: 0,
+          email,
+          nombre_completo: 'Administrador',
+        }));
+      }
+    }
+
+    return res.status(401).json({ error: 'Credenciales inválidas' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al iniciar sesión' });

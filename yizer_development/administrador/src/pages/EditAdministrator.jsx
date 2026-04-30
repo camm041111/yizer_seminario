@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Alert } from '@mui/material';
+import { Box, TextField, Button, Typography, Alert, Paper } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
@@ -32,7 +32,7 @@ const EditAdministrator = () => {
           telefono: response.data.telefono || '',
           password: '',
         });
-      } catch (err) {
+      } catch {
         setError('No se pudo cargar el administrador');
       } finally {
         setLoading(false);
@@ -86,13 +86,17 @@ const EditAdministrator = () => {
   }
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Editar Administrador
-      </Typography>
+    <Box sx={{ maxWidth: 720, mx: 'auto' }}>
+      <Paper sx={{ p: { xs: 3, sm: 4 } }}>
+        <Typography variant="h4">
+          Editar administrador
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5, mb: 3 }}>
+          Cambia los datos de acceso y contacto.
+        </Typography>
 
-      <form onSubmit={handleSubmit}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <form onSubmit={handleSubmit}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
             label="Nombre Completo"
             name="nombre_completo"
@@ -140,8 +144,9 @@ const EditAdministrator = () => {
               Guardar cambios
             </Button>
           </Box>
-        </Box>
-      </form>
+          </Box>
+        </form>
+      </Paper>
     </Box>
   );
 };

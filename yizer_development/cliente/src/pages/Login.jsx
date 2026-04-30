@@ -1,83 +1,44 @@
-// Vista de Login - Autenticación de usuarios
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { api } from '../config/api';
+import { useAuth } from '../context/AuthContext';
+
+const inicial = {
+  nombre_completo: '',
+  email: '',
+  telefono: '',
+  password: '',
+  confirmar: '',
+};
 
 export default function Login() {
   const navigate = useNavigate();
-  
-  // Estados del formulario
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [tipoUsuario, setTipoUsuario] = useState('cliente'); // 'admin' o 'cliente'
-  
-  // Estados de registro (para nuevos clientes)
-  const [isRegistro, setIsRegistro] = useState(false);
-  const [nombreCompleto, setNombreCompleto] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  
-  // Estados de UI
+  const { isAuthenticated, login } = useAuth();
+  const [modo, setModo] = useState('login');
+  const [form, setForm] = useState(inicial);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
-  // Función para iniciar sesión
-  async function handleLogin(e) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
-    try {
-      const endpoint = tipoUsuario === 'admin' 
-        ? '/auth/login/admin' 
-        : '/auth/login/cliente';
-      
-      const data = await api.post(endpoint, { email, password });
-      
-      // Guardar token y datos del usuario
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.usuario));
-      localStorage.setItem('role', data.usuario.role);
-      
-      // Redireccionar según el rol
-      if (data.usuario.role === 'admin') {
-        navigate('/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  function cambiarCampo(event) {
+    setForm({ ...form, [event.target.name]: event.target.value });
   }
 
-  // Función para registrar nuevo cliente
-  async function handleRegistro(e) {
-    e.preventDefault();
-    setError(null);
-    
-    // Validar contraseñas
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      return;
-    }
-    
+  async function enviar(event) {
+    event.preventDefault();
+    setError('');
     setLoading(true);
 
     try {
-      const data = await api.post('/auth/registro', {
-        nombre_completo: nombreCompleto,
-        email,
-        password,
-        telefono: telefono || undefined
-      });
-      
-      // Después de registro exitoso, hacer login automático
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.usuario));
-      localStorage.setItem('role', data.usuario.role);
-      
+      const data = modo === 'registro'
+        ? await registrar()
+        : await api.post('/auth/login/cliente', {
+            email: form.email,
+            password: form.password,
+          });
+
+      login(data.user, data.token);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -86,142 +47,82 @@ export default function Login() {
     }
   }
 
-  // Función para cerrar sesión
-  function handleLogout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('role');
-    navigate('/');
-  }
-
-  // Cambiar entre login y registro
-  function toggleModo() {
-    setIsRegistro(!isRegistro);
-    setError(null);
+  async function registrar() {
+    if (form.password !== form.confirmar) {
+      throw new Error('Las contrasenas no coinciden');
+    }
+    return api.post('/auth/registro', {
+      nombre_completo: form.nombre_completo,
+      email: form.email,
+      telefono: form.telefono || undefined,
+      password: form.password,
+    });
   }
 
   return (
-    <div>
-      <h1>{isRegistro ? 'Registrarse' : 'Iniciar Sesión'}</h1>
-      
-      {/* Selector de tipo de usuario (solo en login) */}
-      {!isRegistro && (
-        <div>
-          <label>
-            <input 
-              type="radio" 
-              name="tipoUsuario" 
-              value="cliente"
-              checked={tipoUsuario === 'cliente'}
-              onChange={(e) => setTipoUsuario(e.target.value)}
-            />
-            Cliente
-          </label>
-          <label>
-            <input 
-              type="radio" 
-              name="tipoUsuario" 
-              value="admin"
-              checked={tipoUsuario === 'admin'}
-              onChange={(e) => setTipoUsuario(e.target.value)}
-            />
-            Administrador
-          </label>
+    <main>
+      <header className="topbar">
+        <Link className="brand" to="/">Yizer</Link>
+        <nav className="navlinks">
+          <Link to="/catalogo">Catalogo</Link>
+        </nav>
+      </header>
+
+      <section className="auth-shell">
+        <div className="auth-copy">
+          <p className="eyebrow">Cuenta de cliente</p>
+          <h1>{modo === 'registro' ? 'Crea tu cuenta' : 'Entra a Yizer'}</h1>
+          <p>
+            Tu cuenta guarda pedidos, datos de contacto y personalizaciones para que el proceso de
+            compra sea mas rapido.
+          </p>
         </div>
-      )}
 
-      {/* Mensaje de error */}
-      {error && <div><p>Error: {error}</p></div>}
+        <form className="panel form" onSubmit={enviar}>
+          <div className="segmented">
+            <button type="button" className={modo === 'login' ? 'active' : ''} onClick={() => setModo('login')}>
+              Entrar
+            </button>
+            <button type="button" className={modo === 'registro' ? 'active' : ''} onClick={() => setModo('registro')}>
+              Registro
+            </button>
+          </div>
 
-      {/* Formulario */}
-      {isRegistro ? (
-        // Formulario de Registro
-        <form onSubmit={handleRegistro}>
-          <div>
-            <label>Nombre completo:</label>
-            <input 
-              type="text" 
-              value={nombreCompleto}
-              onChange={(e) => setNombreCompleto(e.target.value)}
-              required 
-            />
-          </div>
-          <div>
-            <label>Email:</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required 
-            />
-          </div>
-          <div>
-            <label>Teléfono (opcional):</label>
-            <input 
-              type="tel" 
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>Contraseña:</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required 
-            />
-          </div>
-          <div>
-            <label>Confirmar contraseña:</label>
-            <input 
-              type="password" 
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required 
-            />
-          </div>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Registrando...' : 'Registrarse'}
+          {error && <p className="notice error">{error}</p>}
+
+          {modo === 'registro' && (
+            <>
+              <label>
+                Nombre completo
+                <input name="nombre_completo" value={form.nombre_completo} onChange={cambiarCampo} required />
+              </label>
+              <label>
+                Telefono
+                <input name="telefono" value={form.telefono} onChange={cambiarCampo} />
+              </label>
+            </>
+          )}
+
+          <label>
+            Email
+            <input name="email" type="email" value={form.email} onChange={cambiarCampo} required />
+          </label>
+          <label>
+            Contrasena
+            <input name="password" type="password" value={form.password} onChange={cambiarCampo} required minLength={6} />
+          </label>
+          {modo === 'registro' && (
+            <label>
+              Confirmar contrasena
+              <input name="confirmar" type="password" value={form.confirmar} onChange={cambiarCampo} required minLength={6} />
+            </label>
+          )}
+
+          <button className="button primary full" disabled={loading}>
+            {loading ? 'Procesando...' : modo === 'registro' ? 'Crear cuenta' : 'Entrar'}
           </button>
         </form>
-      ) : (
-        // Formulario de Login
-        <form onSubmit={handleLogin}>
-          <div>
-            <label>Email:</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required 
-            />
-          </div>
-          <div>
-            <label>Contraseña:</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required 
-            />
-          </div>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </button>
-        </form>
-      )}
-
-      {/* Toggle entre login y registro */}
-      <button type="button" onClick={toggleModo}>
-        {isRegistro ? '¿Ya tienes cuenta? Iniciar sesión' : '¿No tienes cuenta? Regístrate'}
-      </button>
-
-      {/* Links de navegación */}
-      <div>
-        <Link to="/">Volver al inicio</Link>
-        <Link to="/catalogo">Ver catálogo</Link>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

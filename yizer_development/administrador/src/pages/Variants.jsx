@@ -46,9 +46,9 @@ const Variants = () => {
   const uniqueProducts = [...new Set(variants.map(v => ({ id: v.id_producto, name: v.producto_nombre })))].map(p => ({ value: p.id.toString(), label: p.name }));
 
   const stats = [
-    { label: 'Total Variants', value: variants.length.toString(), color: '#131b2e' },
-    { label: 'Unique Colors', value: uniqueColors.length.toString(), color: '#131b2e' },
-    { label: 'Out of Stock', value: variants.filter(v => v.stock === 0).length.toString(), color: '#ba1a1a' },
+    { label: 'Variantes totales', value: variants.length.toString(), color: '#241316' },
+    { label: 'Colores únicos', value: uniqueColors.length.toString(), color: '#241316' },
+    { label: 'Sin stock', value: variants.filter(v => v.stock === 0).length.toString(), color: '#d71920' },
   ];
 
   const handleDelete = async (id) => {
@@ -60,43 +60,55 @@ const Variants = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Typography>Cargando variantes...</Typography>;
 
   return (
     <Box sx={{ maxWidth: 1280, mx: 'auto' }}>
-      {/* Breadcrumbs */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 4 }}>
-        <Typography
-          component="a"
-          href="/products"
-          sx={{
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            color: '#534341',
-            textDecoration: 'none',
-            '&:hover': { color: '#dc2626' },
-          }}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: 3, gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Typography
+              component="a"
+              href="/products"
+              sx={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: '#74565b',
+                textDecoration: 'none',
+                '&:hover': { color: '#d71920' },
+              }}
+            >
+              Productos
+            </Typography>
+            <ChevronRightIcon sx={{ fontSize: 14, color: '#74565b' }} />
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#a70f16' }}>
+              Variantes
+            </Typography>
+          </Box>
+          <Typography variant="h4">Variantes</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+            Control de tallas, colores y existencias por producto.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate('/variants/new')}
         >
-          Products
-        </Typography>
-        <ChevronRightIcon sx={{ fontSize: 14, color: '#534341' }} />
-        <Typography sx={{ fontSize: '0.75rem', fontWeight: 500, color: '#131b2e' }}>
-          Variants
-        </Typography>
+          Nueva variante
+        </Button>
       </Box>
 
       {/* Stats Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' }, gap: 3, mb: 6 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' }, gap: 2, mb: 3 }}>
         {stats.map((stat) => (
           <Paper
             key={stat.label}
             sx={{
               p: 3,
-              borderRadius: '0.75rem',
-              border: '1px solid rgba(216, 194, 191, 0.3)',
             }}
           >
-            <Typography sx={{ fontSize: '0.75rem', color: '#534341', mb: 1 }}>
+            <Typography sx={{ fontSize: '0.75rem', color: '#74565b', mb: 1, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {stat.label}
             </Typography>
             <Typography
@@ -114,12 +126,12 @@ const Variants = () => {
       </Box>
 
       {/* Main Content Card */}
-      <Paper sx={{ borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid rgba(216, 194, 191, 0.3)' }}>
+      <Paper sx={{ overflow: 'hidden' }}>
         {/* Filter Bar */}
         <Box
           sx={{
             p: 3,
-            borderBottom: '1px solid rgba(216, 194, 191, 0.3)',
+            borderBottom: '1px solid rgba(139, 30, 36, 0.12)',
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             gap: 2,
@@ -135,13 +147,9 @@ const Variants = () => {
               onChange={(e) => setFilters({ ...filters, product: e.target.value })}
               sx={{
                 minWidth: 200,
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: '#f8fafc',
-                  borderRadius: '0.5rem',
-                },
               }}
             >
-              <MenuItem value="">All Products</MenuItem>
+              <MenuItem value="">Todos los productos</MenuItem>
               {uniqueProducts.map((product) => (
                 <MenuItem key={product.value} value={product.value}>
                   {product.label}
@@ -157,13 +165,9 @@ const Variants = () => {
               onChange={(e) => setFilters({ ...filters, size: e.target.value })}
               sx={{
                 minWidth: 120,
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: '#f8fafc',
-                  borderRadius: '0.5rem',
-                },
               }}
             >
-              <MenuItem value="">All Sizes</MenuItem>
+              <MenuItem value="">Todas</MenuItem>
               {uniqueSizes.map((size) => (
                 <MenuItem key={size} value={size}>
                   {size}
@@ -179,13 +183,9 @@ const Variants = () => {
               onChange={(e) => setFilters({ ...filters, color: e.target.value })}
               sx={{
                 minWidth: 140,
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: '#f8fafc',
-                  borderRadius: '0.5rem',
-                },
               }}
             >
-              <MenuItem value="">All Colors</MenuItem>
+              <MenuItem value="">Todos</MenuItem>
               {uniqueColors.map((color) => (
                 <MenuItem key={color} value={color}>
                   {color}
@@ -194,42 +194,30 @@ const Variants = () => {
             </TextField>
           </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{
-              bgcolor: '#dc2626',
-              fontWeight: 600,
-              '&:hover': { bgcolor: '#dc2626', opacity: 0.9 },
-            }}
-            onClick={() => navigate('/variants/new')}
-          >
-            Add Variant
-          </Button>
         </Box>
 
         {/* Table */}
         <Box sx={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(216, 194, 191, 0.3)' }}>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#534341', textTransform: 'uppercase' }}>
+              <tr style={{ borderBottom: '1px solid rgba(139, 30, 36, 0.12)', background: '#fff0f0' }}>
+                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800, color: '#6f1d24', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   ID
                 </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#534341', textTransform: 'uppercase' }}>
-                  Product
+                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800, color: '#6f1d24', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Producto
                 </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#534341', textTransform: 'uppercase' }}>
+                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800, color: '#6f1d24', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Color
                 </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#534341', textTransform: 'uppercase' }}>
-                  Size
+                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800, color: '#6f1d24', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Talla
                 </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#534341', textTransform: 'uppercase' }}>
+                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800, color: '#6f1d24', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Stock
                 </th>
-                <th style={{ padding: '16px 24px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: '#534341', textTransform: 'uppercase' }}>
-                  Actions
+                <th style={{ padding: '16px 24px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 800, color: '#6f1d24', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Acciones
                 </th>
               </tr>
             </thead>
@@ -239,21 +227,21 @@ const Variants = () => {
                   key={variant.id_variante}
                   style={{ borderBottom: '1px solid rgba(216, 194, 191, 0.2)' }}
                 >
-                  <td style={{ padding: '16px 24px', fontSize: '0.875rem', color: '#534341', fontWeight: 600 }}>
+                  <td style={{ padding: '16px 24px', fontSize: '0.875rem', color: '#74565b', fontWeight: 700 }}>
                     {variant.id_variante}
                   </td>
                   <td style={{ padding: '16px 24px' }}>
-                    <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#131b2e' }}>
+                    <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#241316' }}>
                       {variant.producto_nombre}
                     </Typography>
                   </td>
                   <td style={{ padding: '16px 24px' }}>
-                    <Typography sx={{ fontSize: '0.875rem', color: '#131b2e' }}>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#241316' }}>
                       {variant.color}
                     </Typography>
                   </td>
                   <td style={{ padding: '16px 24px' }}>
-                    <Typography sx={{ fontSize: '0.875rem', color: '#131b2e' }}>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#241316' }}>
                       {variant.talla}
                     </Typography>
                   </td>
@@ -262,17 +250,17 @@ const Variants = () => {
                       sx={{
                         fontSize: '0.875rem',
                         fontWeight: 600,
-                        color: variant.stock === 0 ? '#ba1a1a' : '#131b2e',
+                        color: variant.stock === 0 ? '#d71920' : '#241316',
                       }}
                     >
-                      {variant.stock === 0 ? 'Out of Stock' : `${variant.stock} units`}
+                      {variant.stock === 0 ? 'Sin stock' : `${variant.stock} unidades`}
                     </Typography>
                   </td>
                   <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                    <IconButton size="small" sx={{ color: '#534341', mr: 1 }} onClick={() => navigate(`/variants/${variant.id_variante}/edit`)}>
+                    <IconButton size="small" sx={{ color: '#a70f16', mr: 1 }} onClick={() => navigate(`/variants/${variant.id_variante}/edit`)}>
                       <EditIcon fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" sx={{ color: '#534341' }} onClick={() => handleDelete(variant.id_variante)}>
+                    <IconButton size="small" color="error" onClick={() => handleDelete(variant.id_variante)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </td>

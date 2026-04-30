@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Alert } from '@mui/material';
+import { Box, TextField, Button, Typography, Alert, Paper } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -34,7 +34,7 @@ const NewAdministrator = () => {
     }
 
     try {
-      const response = await axios.post('/api/administradores', formData, {
+      await axios.post('/api/administradores', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -52,13 +52,17 @@ const NewAdministrator = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Nuevo Administrador
-      </Typography>
+    <Box sx={{ maxWidth: 720, mx: 'auto' }}>
+      <Paper sx={{ p: { xs: 3, sm: 4 } }}>
+        <Typography variant="h4">
+          Nuevo administrador
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5, mb: 3 }}>
+          Agrega una cuenta con acceso al panel administrativo.
+        </Typography>
 
-      <form onSubmit={handleSubmit}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <form onSubmit={handleSubmit}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
             label="Nombre Completo"
             name="nombre_completo"
@@ -115,8 +119,9 @@ const NewAdministrator = () => {
               {loading ? 'Creando...' : 'Crear Administrador'}
             </Button>
           </Box>
-        </Box>
-      </form>
+          </Box>
+        </form>
+      </Paper>
     </Box>
   );
 };

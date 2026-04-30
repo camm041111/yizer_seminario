@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, TextField, Button, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
+import { Alert, Box, Typography, TextField, Button, MenuItem, Checkbox, FormControlLabel, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -57,12 +57,16 @@ const NewVariant = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Add New Variant
-      </Typography>
-      {error && <Typography color="error">{error}</Typography>}
-      <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box sx={{ maxWidth: 720, mx: 'auto' }}>
+      <Paper sx={{ p: { xs: 3, sm: 4 } }}>
+        <Typography variant="h4">
+          Nueva variante
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5, mb: 3 }}>
+          Define color, talla y stock para un producto.
+        </Typography>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
           select
           label="Product"
@@ -110,13 +114,14 @@ const NewVariant = () => {
         />
         <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
           <Button type="submit" variant="contained" color="primary" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Variant'}
+            {loading ? 'Guardando...' : 'Guardar variante'}
           </Button>
           <Button variant="outlined" onClick={() => navigate('/variants')}>
-            Cancel
+            Cancelar
           </Button>
         </Box>
-      </Box>
+        </Box>
+      </Paper>
     </Box>
   );
 };

@@ -1,564 +1,249 @@
-// Vista de Dashboard - Panel de control para clientes y administradores
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../config/api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+import { api, assetUrl } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  
-  // Estados de datos
-  const [usuario, setUsuario] = useState(null);
+  const { user, token, isAuthenticated, login, logout } = useAuth();
+  const [tab, setTab] = useState('pedidos');
   const [pedidos, setPedidos] = useState([]);
-  const [personalizaciones, setPersonalizaciones] = useState([]);
-  
-  // Estados de UI
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [seccion, setSeccion] = useState('pedidos'); // 'pedidos', 'perfil', 'admin'
-  
-  // Datos de admin
-  const [clientes, setClientes] = useState([]);
-  const [productos, setProductos] = useState([]);
-  const [administradores, setAdministradores] = useState([]);
+  const [pedidoDetalle, setPedidoDetalle] = useState(null);
+  const [perfil, setPerfil] = useState(null);
+  const [estado, setEstado] = useState('cargando');
+  const [mensaje, setMensaje] = useState('');
 
-  // Cargar datos al iniciar
+  const resumen = useMemo(() => ({
+    pedidos: pedidos.length,
+    pendientes: pedidos.filter((pedido) => pedido.estado === 'pendiente').length,
+  }), [pedidos]);
+
+  const cargarDatos = useCallback(async () => {
+    setEstado('cargando');
+    setMensaje('');
+    try {
+      const [misPedidos, miPerfil] = await Promise.all([
+        api.get('/pedidos', token),
+        api.get(`/clientes/${user?.id}`, token),
+      ]);
+      setPedidos(misPedidos);
+      setPerfil(miPerfil);
+      setEstado('listo');
+    } catch (err) {
+      setMensaje(err.message);
+      setEstado('error');
+    }
+  }, [token, user?.id]);
+
   useEffect(() => {
-    verificarAuth();
-  }, []);
+    if (isAuthenticated) cargarDatos();
+  }, [cargarDatos, isAuthenticated]);
 
-  // Cargar datos según rol
-  useEffect(() => {
-    if (usuario) {
-      cargarDatos();
-    }
-  }, [usuario, seccion]);
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  // Función para verificar autenticación
-  async function verificarAuth() {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    const role = localStorage.getItem('role');
-    
-    if (!token || !userData) {
-      navigate('/login');
-      return;
-    }
-    
+  async function abrirPedido(idPedido) {
     try {
-      const user = JSON.parse(userData);
-      user.role = role;
-      setUsuario(user);
+      const detalle = await api.get(`/pedidos/${idPedido}`, token);
+      setPedidoDetalle(detalle);
     } catch (err) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('role');
-      navigate('/login');
+      setMensaje(err.message);
     }
   }
 
-  // Función para cargar datos según la sección
-  async function cargarDatos() {
-    const token = localStorage.getItem('token');
-    setLoading(true);
-    setError(null);
-    
+  async function actualizarPerfil(event) {
+    event.preventDefault();
+    const datos = limpiarVacios(Object.fromEntries(new FormData(event.currentTarget)));
     try {
-      if (usuario.role === 'admin') {
-        // Cargar datos de admin
-        await Promise.all([
-          cargarPedidosAdmin(token),
-          cargarClientes(token),
-          cargarProductos(token),
-          cargarAdministradores(token)
-        ]);
-      } else {
-        // Cargar datos de cliente
-        await Promise.all([
-          cargarPedidosCliente(token),
-          cargarPersonalizaciones(token)
-        ]);
-      }
+      const actualizado = await api.put(`/clientes/${user.id}`, datos, token);
+      setPerfil(actualizado);
+      login({ ...user, ...actualizado, role: user.role }, token);
+      setMensaje('Perfil actualizado.');
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Cargar pedidos (admin)
-  async function cargarPedidosAdmin(token) {
-    const data = await api.get('/pedidos', token);
-    setPedidos(data);
-  }
-
-  // Cargar pedidos (cliente)
-  async function cargarPedidosCliente(token) {
-    const data = await api.get('/pedidos', token);
-    setPedidos(data);
-  }
-
-  // Cargar personalizaciones
-  async function cargarPersonalizaciones(token) {
-    const data = await api.get('/personalizaciones', token);
-    setPersonalizaciones(data);
-  }
-
-  // Cargar clientes (admin)
-  async function cargarClientes(token) {
-    const data = await api.get('/clientes', token);
-    setClientes(data);
-  }
-
-  // Cargar productos (admin)
-  async function cargarProductos(token) {
-    const data = await api.get('/productos');
-    setProductos(data);
-  }
-
-  // Cargar administradores (admin)
-  async function cargarAdministradores(token) {
-    const data = await api.get('/administradores', token);
-    setAdministradores(data);
-  }
-
-  // Función para cerrar sesión
-  function handleLogout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('role');
-    navigate('/');
-  }
-
-  // Función para actualizar perfil
-  async function actualizarPerfil(e) {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const formData = new FormData(e.target);
-    const datos = Object.fromEntries(formData);
-    
-    try {
-      await api.put(`/clientes/${usuario.id}`, datos, token);
-      alert('Perfil actualizado');
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  }
-
-  // Función para crear nuevo cliente (admin)
-  async function crearCliente(e) {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const formData = new FormData(e.target);
-    const datos = Object.fromEntries(formData);
-    
-    try {
-      await api.post('/clientes', datos, token);
-      alert('Cliente creado');
-      cargarClientes(token);
-      e.target.reset();
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  }
-
-  // Función para crear nuevo producto (admin)
-  async function crearProducto(e) {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const formData = new FormData(e.target);
-    const datos = Object.fromEntries(formData);
-    datos.precio_base = parseFloat(datos.precio_base);
-    
-    try {
-      await api.post('/productos', datos, token);
-      alert('Producto creado');
-      cargarProductos(token);
-      e.target.reset();
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  }
-
-  // Función para crear nuevo administrador (admin)
-  async function crearAdministrador(e) {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const formData = new FormData(e.target);
-    const datos = Object.fromEntries(formData);
-    
-    try {
-      await api.post('/administradores', datos, token);
-      alert('Administrador creado');
-      cargarAdministradores(token);
-      e.target.reset();
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  }
-
-  // Función para actualizar estado de pedido (admin)
-  async function actualizarEstadoPedido(idPedido, nuevoEstado) {
-    const token = localStorage.getItem('token');
-    
-    try {
-      await api.put(`/pedidos/${idPedido}`, { estado: nuevoEstado }, token);
-      cargarPedidosAdmin(token);
-      alert('Estado actualizado');
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  }
-
-  // Función para crear personalización
-  async function crearPersonalizacion(e) {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const formData = new FormData(e.target);
-    const datos = Object.fromEntries(formData);
-    
-    try {
-      await api.post('/personalizaciones', datos, token);
-      alert('Personalización creada');
-      cargarPersonalizaciones(token);
-      e.target.reset();
-    } catch (err) {
-      alert('Error: ' + err.message);
+      setMensaje(err.message);
     }
   }
 
   return (
-    <div>
-      {/* Header */}
-      <header>
-        <h1>Dashboard - Yizer</h1>
-        <div>
-          <span>Bienvenido, {usuario?.nombre_completo || usuario?.nombre || usuario?.email}</span>
-          <span>Rol: {usuario?.role}</span>
-          <button onClick={handleLogout}>Cerrar Sesión</button>
-        </div>
+    <main>
+      <header className="topbar">
+        <Link className="brand" to="/">Yizer</Link>
+        <nav className="navlinks">
+          <Link to="/catalogo">Catalogo</Link>
+          <button className="link-button" onClick={logout}>Salir</button>
+        </nav>
       </header>
 
-      {/* Navegación */}
-      <nav>
-        <Link to="/">Inicio</Link>
-        <Link to="/catalogo">Catálogo</Link>
-        <Link to="/login">Login</Link>
-      </nav>
+      <section className="account-layout">
+        <aside className="account-aside">
+          <p className="eyebrow">Mi cuenta</p>
+          <h1>{perfil?.nombre_completo || user?.nombre_completo || user?.email}</h1>
+          <div className="stats">
+            <div><strong>{resumen.pedidos}</strong><span>Pedidos</span></div>
+            <div><strong>{resumen.pendientes}</strong><span>Pendientes</span></div>
+          </div>
+          <div className="tabs">
+            <button className={tab === 'pedidos' ? 'active' : ''} onClick={() => setTab('pedidos')}>Pedidos</button>
+            <button className={tab === 'perfil' ? 'active' : ''} onClick={() => setTab('perfil')}>Perfil</button>
+          </div>
+        </aside>
 
-      {/* Menú según rol */}
-      <div>
-        {usuario?.role === 'admin' ? (
-          // Menú Admin
-          <>
-            <button onClick={() => setSeccion('pedidos')}>Pedidos</button>
-            <button onClick={() => setSeccion('clientes')}>Clientes</button>
-            <button onClick={() => setSeccion('productos')}>Productos</button>
-            <button onClick={() => setSeccion('administradores')}>Administradores</button>
-            <button onClick={() => setSeccion('perfil')}>Mi Perfil</button>
-          </>
-        ) : (
-          // Menú Cliente
-          <>
-            <button onClick={() => setSeccion('pedidos')}>Mis Pedidos</button>
-            <button onClick={() => setSeccion('personalizaciones')}>Mis Personalizaciones</button>
-            <button onClick={() => setSeccion('perfil')}>Mi Perfil</button>
-          </>
-        )}
+        <section className="account-content">
+          {estado === 'cargando' && <p className="muted">Cargando tu informacion...</p>}
+          {mensaje && <p className={`notice ${mensaje.includes('Error') ? 'error' : 'success'}`}>{mensaje}</p>}
+          {estado === 'error' && <button className="button secondary" onClick={cargarDatos}>Reintentar</button>}
+
+          {estado === 'listo' && tab === 'pedidos' && (
+            <div className="panel">
+              <div className="section-head compact">
+                <div>
+                  <p className="eyebrow">Historial</p>
+                  <h2>Mis pedidos</h2>
+                </div>
+                <Link className="button secondary" to="/catalogo">Nuevo pedido</Link>
+              </div>
+              {!pedidos.length ? (
+                <p className="muted">Aun no tienes pedidos registrados.</p>
+              ) : (
+                <div className="table-list">
+                  {pedidos.map((pedido) => (
+                    <article className="order-row" key={pedido.id_pedido}>
+                      <div>
+                        <strong>Pedido #{pedido.id_pedido}</strong>
+                        <span>{new Date(pedido.fecha_pedido).toLocaleDateString()}</span>
+                      </div>
+                      <span className="status">{pedido.estado}</span>
+                      <strong>${Number(pedido.total || 0).toFixed(2)}</strong>
+                      <button className="button secondary" onClick={() => abrirPedido(pedido.id_pedido)}>Detalle</button>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {estado === 'listo' && tab === 'perfil' && perfil && (
+            <form className="panel form narrow" onSubmit={actualizarPerfil}>
+              <h2>Perfil</h2>
+              <label>
+                Nombre completo
+                <input name="nombre_completo" defaultValue={perfil.nombre_completo || ''} required />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" defaultValue={perfil.email || ''} required />
+              </label>
+              <label>
+                Telefono
+                <input name="telefono" defaultValue={perfil.telefono || ''} />
+              </label>
+              <label>
+                Nueva contrasena
+                <input name="password" type="password" minLength="6" />
+              </label>
+              <button className="button primary">Actualizar perfil</button>
+            </form>
+          )}
+        </section>
+      </section>
+
+      {pedidoDetalle && (
+        <div className="modal-backdrop" onClick={() => setPedidoDetalle(null)}>
+          <section className="modal panel" onClick={(event) => event.stopPropagation()}>
+            <div className="section-head compact">
+              <div>
+                <p className="eyebrow">Detalle</p>
+                <h2>Pedido #{pedidoDetalle.id_pedido}</h2>
+              </div>
+              <button className="link-button" onClick={() => setPedidoDetalle(null)}>Cerrar</button>
+            </div>
+            <p className="status">{pedidoDetalle.estado}</p>
+            <div className="list">
+              {pedidoDetalle.detalles?.map((detalle) => (
+                <article className="saved-item order-detail-item" key={detalle.id_detalle}>
+                  <OrderCustomizationPreview detalle={detalle} />
+                  <div>
+                    <strong>{detalle.producto_nombre}</strong>
+                    <span>{detalle.color} / {detalle.talla} x {detalle.cantidad}</span>
+                    {detalle.personalizacion_tipo && (
+                      <small>
+                        Personalizacion: {detalle.personalizacion_tipo}
+                        {detalle.personalizacion_texto ? ` - ${detalle.personalizacion_texto}` : ''}
+                        {detalle.personalizacion_posicion ? ` (${detalle.personalizacion_posicion})` : ''}
+                      </small>
+                    )}
+                  </div>
+                  <strong>${Number(detalle.subtotal || 0).toFixed(2)}</strong>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+    </main>
+  );
+}
+
+function OrderCustomizationPreview({ detalle }) {
+  const vistaPrevia = assetUrl(detalle.personalizacion_vista_previa_url);
+  const productoImagen = assetUrl(detalle.producto_imagen_url);
+  const personalizacionImagen = assetUrl(detalle.personalizacion_url);
+  const posicion = obtenerTransformacion(detalle.personalizacion_posicion);
+  const mostrarTexto = detalle.personalizacion_tipo !== 'imagen' && detalle.personalizacion_texto;
+  const mostrarImagen = detalle.personalizacion_tipo !== 'texto' && personalizacionImagen;
+  const tienePersonalizacion = detalle.personalizacion_tipo && (mostrarTexto || mostrarImagen);
+
+  if (vistaPrevia) {
+    return (
+      <div className="mini-preview">
+        <img src={vistaPrevia} alt={`Pedido personalizado de ${detalle.producto_nombre}`} />
       </div>
+    );
+  }
 
-      {/* Contenido según sección */}
-      {loading && <p>Cargando...</p>}
-      {error && <p>Error: {error}</p>}
-
-      {!loading && !error && (
-        <div>
-          {/* Sección Pedidos (para ambos roles) */}
-          {seccion === 'pedidos' && (
-            <div>
-              <h2>{usuario?.role === 'admin' ? 'Todos los Pedidos' : 'Mis Pedidos'}</h2>
-              
-              {pedidos.length === 0 ? (
-                <p>No hay pedidos</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Fecha</th>
-                      <th>Estado</th>
-                      <th>Total</th>
-                      {usuario?.role === 'admin' && <th>Cliente ID</th>}
-                      {usuario?.role === 'admin' && <th>Acciones</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pedidos.map(pedido => (
-                      <tr key={pedido.id_pedido}>
-                        <td>{pedido.id_pedido}</td>
-                        <td>{new Date(pedido.fecha_pedido).toLocaleDateString()}</td>
-                        <td>{pedido.estado}</td>
-                        <td>${pedido.total}</td>
-                        {usuario?.role === 'admin' && <td>{pedido.id_cliente}</td>}
-                        {usuario?.role === 'admin' && (
-                          <td>
-                            <select 
-                              value={pedido.estado}
-                              onChange={(e) => actualizarEstadoPedido(pedido.id_pedido, e.target.value)}
-                            >
-                              <option value="pendiente">Pendiente</option>
-                              <option value="en_proceso">En Proceso</option>
-                              <option value="enviado">Enviado</option>
-                              <option value="entregado">Entregado</option>
-                              <option value="cancelado">Cancelado</option>
-                            </select>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {/* Sección Clientes (Admin) */}
-          {seccion === 'clientes' && usuario?.role === 'admin' && (
-            <div>
-              <h2>Gestión de Clientes</h2>
-              
-              {/* Formulario para crear cliente */}
-              <h3>Nuevo Cliente</h3>
-              <form onSubmit={crearCliente}>
-                <input name="nombre_completo" placeholder="Nombre completo" required />
-                <input name="email" type="email" placeholder="Email" required />
-                <input name="telefono" placeholder="Teléfono" />
-                <input name="password" type="password" placeholder="Contraseña" required />
-                <button type="submit">Crear Cliente</button>
-              </form>
-
-              {/* Lista de clientes */}
-              <h3>Lista de Clientes</h3>
-              {clientes.length === 0 ? (
-                <p>No hay clientes</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nombre</th>
-                      <th>Email</th>
-                      <th>Teléfono</th>
-                      <th>Fecha Registro</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {clientes.map(cliente => (
-                      <tr key={cliente.id_cliente}>
-                        <td>{cliente.id_cliente}</td>
-                        <td>{cliente.nombre_completo}</td>
-                        <td>{cliente.email}</td>
-                        <td>{cliente.telefono}</td>
-                        <td>{new Date(cliente.fecha_registro).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {/* Sección Productos (Admin) */}
-          {seccion === 'productos' && usuario?.role === 'admin' && (
-            <div>
-              <h2>Gestión de Productos</h2>
-              
-              {/* Formulario para crear producto */}
-              <h3>Nuevo Producto</h3>
-              <form onSubmit={crearProducto}>
-                <input name="nombre" placeholder="Nombre del producto" required />
-                <input name="tipo_tela" placeholder="Tipo de tela" />
-                <input name="precio_base" type="number" step="0.01" placeholder="Precio base" required />
-                <label>
-                  <input name="activo" type="checkbox" defaultChecked />
-                  Activo
-                </label>
-                <button type="submit">Crear Producto</button>
-              </form>
-
-              {/* Lista de productos */}
-              <h3>Lista de Productos</h3>
-              {productos.length === 0 ? (
-                <p>No hay productos</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nombre</th>
-                      <th>Tipo Tela</th>
-                      <th>Precio</th>
-                      <th>Activo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {productos.map(producto => (
-                      <tr key={producto.id}>
-                        <td>{producto.id}</td>
-                        <td>{producto.nombre}</td>
-                        <td>{producto.descripcion}</td>
-                        <td>${producto.precio}</td>
-                        <td>{producto.activo ? 'Sí' : 'No'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {/* Sección Administradores (Admin) */}
-          {seccion === 'administradores' && usuario?.role === 'admin' && (
-            <div>
-              <h2>Gestión de Administradores</h2>
-              
-              {/* Formulario para crear administrador */}
-              <h3>Nuevo Administrador</h3>
-              <form onSubmit={crearAdministrador}>
-                <input name="nombre" placeholder="Nombre" required />
-                <input name="email" type="email" placeholder="Email" required />
-                <input name="password" type="password" placeholder="Contraseña" required />
-                <button type="submit">Crear Administrador</button>
-              </form>
-
-              {/* Lista de administradores */}
-              <h3>Lista de Administradores</h3>
-              {administradores.length === 0 ? (
-                <p>No hay administradores</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nombre</th>
-                      <th>Email</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {administradores.map(admin => (
-                      <tr key={admin.id_administrador}>
-                        <td>{admin.id_administrador}</td>
-                        <td>{admin.nombre}</td>
-                        <td>{admin.email}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {/* Sección Personalizaciones (Cliente) */}
-          {seccion === 'personalizaciones' && usuario?.role === 'cliente' && (
-            <div>
-              <h2>Mis Personalizaciones</h2>
-              
-              {/* Formulario para crear personalización */}
-              <h3>Nueva Personalización</h3>
-              <form onSubmit={crearPersonalizacion}>
-                <select name="tipo_personalizacion" required>
-                  <option value="">Seleccionar tipo</option>
-                  <option value="texto">Texto</option>
-                  <option value="imagen">Imagen</option>
-                  <option value="ambos">Texto e Imagen</option>
-                </select>
-                <input name="texto_personalizado" placeholder="Texto personalizado" />
-                <input name="url_imagen" placeholder="URL de imagen" />
-                <input name="color_impresion" placeholder="Color de impresión" />
-                <input name="posicion" placeholder="Posición" />
-                <button type="submit">Crear Personalización</button>
-              </form>
-
-              {/* Lista de personalizaciones */}
-              <h3>Mis Personalizaciones</h3>
-              {personalizaciones.length === 0 ? (
-                <p>No hay personalizaciones</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Tipo</th>
-                      <th>Texto</th>
-                      <th>Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {personalizaciones.map(per => (
-                      <tr key={per.id_personalizacion}>
-                        <td>{per.id_personalizacion}</td>
-                        <td>{per.tipo_personalizacion}</td>
-                        <td>{per.texto_personalizado}</td>
-                        <td>{new Date(per.fecha_creacion).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {/* Sección Perfil (para ambos roles) */}
-          {seccion === 'perfil' && (
-            <div>
-              <h2>Mi Perfil</h2>
-              
-              <form onSubmit={actualizarPerfil}>
-                {usuario?.role === 'cliente' && (
-                  <>
-                    <label>Nombre completo:</label>
-                    <input 
-                      name="nombre_completo" 
-                      defaultValue={usuario?.nombre_completo} 
-                    />
-                  </>
-                )}
-                {usuario?.role === 'admin' && (
-                  <>
-                    <label>Nombre:</label>
-                    <input 
-                      name="nombre" 
-                      defaultValue={usuario?.nombre} 
-                    />
-                  </>
-                )}
-                <label>Email:</label>
-                <input 
-                  name="email" 
-                  type="email" 
-                  defaultValue={usuario?.email} 
-                  disabled 
-                />
-                {usuario?.role === 'cliente' && (
-                  <>
-                    <label>Teléfono:</label>
-                    <input 
-                      name="telefono" 
-                      defaultValue={usuario?.telefono} 
-                    />
-                  </>
-                )}
-                <label>Nueva contraseña (opcional):</label>
-                <input 
-                  name="password" 
-                  type="password" 
-                  placeholder="Nueva contraseña" 
-                />
-                <button type="submit">Actualizar Perfil</button>
-              </form>
-            </div>
+  return (
+    <div className="mini-preview">
+      {productoImagen ? (
+        <img src={productoImagen} alt={detalle.producto_nombre} />
+      ) : (
+        <span>{detalle.producto_nombre}</span>
+      )}
+      {tienePersonalizacion && (
+        <div
+          className="mini-placement"
+          style={{
+            left: `${posicion.x}%`,
+            top: `${posicion.y}%`,
+            transform: `translate(-50%, -50%) rotate(${posicion.rotacion}deg) scale(${posicion.escala / 100})`,
+          }}
+        >
+          {mostrarImagen && <img src={personalizacionImagen} alt="Imagen personalizada" />}
+          {mostrarTexto && (
+            <strong style={{ color: detalle.personalizacion_color || '#111111' }}>
+              {detalle.personalizacion_texto}
+            </strong>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+function obtenerTransformacion(posicion) {
+  if (typeof posicion === 'string') {
+    const match = posicion.match(/x:([\d.]+),y:([\d.]+)(?:,s:([\d.]+))?(?:,r:([-.\d]+))?/);
+    if (match) {
+      return {
+        x: Number(match[1]),
+        y: Number(match[2]),
+        escala: Number(match[3] || 100),
+        rotacion: Number(match[4] || 0),
+      };
+    }
+  }
+  return { x: 50, y: 34, escala: 100, rotacion: 0 };
+}
+
+function limpiarVacios(objeto) {
+  return Object.fromEntries(
+    Object.entries(objeto).filter(([, valor]) => valor !== '' && valor !== undefined)
   );
 }

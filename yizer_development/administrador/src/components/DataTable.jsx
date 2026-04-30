@@ -15,7 +15,7 @@ import {
 import { Edit, Delete, Add } from '@mui/icons-material';
 import axios from 'axios';
 
-const DataTable = ({ title, columns, apiEndpoint, onEdit, onDelete, onAdd }) => {
+const DataTable = ({ title, columns, apiEndpoint, onEdit, onAdd }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
