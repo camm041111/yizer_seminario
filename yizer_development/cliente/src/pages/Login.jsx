@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import Icon from '../components/Icon';
 import { api } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,6 +17,8 @@ export default function Login() {
   const { isAuthenticated, login } = useAuth();
   const [modo, setModo] = useState('login');
   const [form, setForm] = useState(inicial);
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -62,9 +65,9 @@ export default function Login() {
   return (
     <main>
       <header className="topbar">
-        <Link className="brand" to="/">Yizer</Link>
+        <Link className="brand" to="/">YIZER</Link>
         <nav className="navlinks">
-          <Link to="/catalogo">Catalogo</Link>
+          <Link to="/catalogo"><Icon name="bag" />Catalogo</Link>
         </nav>
       </header>
 
@@ -109,16 +112,53 @@ export default function Login() {
           </label>
           <label>
             Contrasena
-            <input name="password" type="password" value={form.password} onChange={cambiarCampo} required minLength={6} />
+            <span className="password-field">
+              <input
+                name="password"
+                type={mostrarPassword ? 'text' : 'password'}
+                value={form.password}
+                onChange={cambiarCampo}
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                aria-label={mostrarPassword ? 'Ocultar contrasena' : 'Ver contrasena'}
+                onClick={() => setMostrarPassword((actual) => !actual)}
+                title={mostrarPassword ? 'Ocultar contrasena' : 'Ver contrasena'}
+              >
+                <Icon name={mostrarPassword ? 'eyeOff' : 'eye'} />
+              </button>
+            </span>
           </label>
           {modo === 'registro' && (
             <label>
               Confirmar contrasena
-              <input name="confirmar" type="password" value={form.confirmar} onChange={cambiarCampo} required minLength={6} />
+              <span className="password-field">
+                <input
+                  name="confirmar"
+                  type={mostrarConfirmar ? 'text' : 'password'}
+                  value={form.confirmar}
+                  onChange={cambiarCampo}
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  aria-label={mostrarConfirmar ? 'Ocultar contrasena' : 'Ver contrasena'}
+                  onClick={() => setMostrarConfirmar((actual) => !actual)}
+                  title={mostrarConfirmar ? 'Ocultar contrasena' : 'Ver contrasena'}
+                >
+                  <Icon name={mostrarConfirmar ? 'eyeOff' : 'eye'} />
+                </button>
+              </span>
             </label>
           )}
 
           <button className="button primary full" disabled={loading}>
+            <Icon name={modo === 'registro' ? 'userPlus' : 'login'} />
             {loading ? 'Procesando...' : modo === 'registro' ? 'Crear cuenta' : 'Entrar'}
           </button>
         </form>

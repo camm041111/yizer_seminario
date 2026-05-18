@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Icon from '../components/Icon';
 import { api, assetUrl } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,33 +21,29 @@ export default function Inicio() {
   return (
     <main>
       <header className="topbar">
-        <Link className="brand" to="/">Yizer</Link>
+        <Link className="brand" to="/">YIZER</Link>
         <nav className="navlinks">
-          <Link to="/catalogo">Catalogo</Link>
-          {isAuthenticated ? <Link to="/dashboard">Mi cuenta</Link> : <Link to="/login">Entrar</Link>}
-          {isAuthenticated && <button className="link-button" onClick={logout}>Salir</button>}
+          <Link to="/catalogo"><Icon name="bag" />Catalogo</Link>
+          {isAuthenticated ? <Link to="/dashboard"><Icon name="user" />Mi cuenta</Link> : <Link to="/login"><Icon name="login" />Entrar</Link>}
+          {isAuthenticated && <button className="link-button" onClick={logout}><Icon name="logout" />Salir</button>}
         </nav>
       </header>
 
       <section className="hero">
         <div className="hero-content">
           <p className="eyebrow">Playeras y prendas personalizadas</p>
-          <h1>Yizer</h1>
+          <h1>YIZER</h1>
           <p>
             Elige una prenda, selecciona color y talla, agrega tus ideas de personalizacion y
             conserva tus pedidos desde tu cuenta.
           </p>
           <div className="actions">
-            <Link className="button primary" to="/catalogo">Explorar catalogo</Link>
+            <Link className="button primary" to="/catalogo"><Icon name="shirt" />Explorar catalogo</Link>
             <Link className="button secondary" to={isAuthenticated ? '/dashboard' : '/login'}>
+              <Icon name={isAuthenticated ? 'user' : 'userPlus'} />
               {isAuthenticated ? `Hola, ${user?.nombre_completo || user?.email}` : 'Crear cuenta'}
             </Link>
           </div>
-        </div>
-        <div className="hero-panel">
-          <span>Pedido</span>
-          <strong>Catalogo + personalizacion + seguimiento</strong>
-          <small>Flujo conectado con productos, variantes, pedidos y personalizaciones del servidor.</small>
         </div>
       </section>
 
@@ -56,7 +53,7 @@ export default function Inicio() {
             <p className="eyebrow">Disponibles ahora</p>
             <h2>Productos destacados</h2>
           </div>
-          <Link to="/catalogo">Ver todos</Link>
+          <Link to="/catalogo"><Icon name="bag" />Ver todos</Link>
         </div>
 
         {estado === 'cargando' && <p className="muted">Cargando productos...</p>}

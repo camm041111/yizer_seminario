@@ -11,12 +11,15 @@ const variantes = require('../controllers/variantesController');
 const personalizaciones = require('../controllers/personalizacionesController');
 const pedidos = require('../controllers/pedidosController');
 const catalogo = require('../controllers/catalogoController');
+const pagos = require('../controllers/pagosController');
 
 router.get('/catalogo', catalogo.catalogo);
 
 router.post('/auth/login/admin', auth.loginAdmin);
 router.post('/auth/login/cliente', auth.loginCliente);
 router.post('/auth/registro', auth.registroCliente);
+
+router.post('/pagos/mercadopago/webhook', pagos.webhookMercadoPago);
 
 router.get('/administradores', requireAuth, requireAdmin, administradores.listar);
 router.get('/administradores/:id', requireAuth, requireAdmin, administradores.obtenerPorId);
@@ -66,5 +69,8 @@ router.delete('/pedidos/:id', requireAuth, pedidos.eliminar);
 router.post('/pedidos/:idPedido/detalles', requireAuth, pedidos.agregarDetalle);
 router.put('/pedidos/detalles/:idDetalle', requireAuth, pedidos.actualizarDetalle);
 router.delete('/pedidos/detalles/:idDetalle', requireAuth, pedidos.eliminarDetalle);
+
+router.post('/pagos/mercadopago/preferencia', requireAuth, pagos.crearPreferenciaMercadoPago);
+router.post('/pagos/mercadopago/confirmar-retorno', requireAuth, pagos.confirmarRetornoMercadoPago);
 
 module.exports = router;

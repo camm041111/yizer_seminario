@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import Icon from '../components/Icon';
 import { api, assetUrl } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const { user, token, isAuthenticated, login, logout } = useAuth();
+  const [searchParams] = useSearchParams();
   const [tab, setTab] = useState('pedidos');
   const [pedidos, setPedidos] = useState([]);
   const [pedidoDetalle, setPedidoDetalle] = useState(null);
@@ -38,6 +40,33 @@ export default function Dashboard() {
     if (isAuthenticated) cargarDatos();
   }, [cargarDatos, isAuthenticated]);
 
+  useEffect(() => {
+    const pago = parametroReal(searchParams.get('pago'));
+    const status = parametroReal(searchParams.get('status')) || parametroReal(searchParams.get('collection_status'));
+    const estadoPago = normalizarEstadoPago(pago) || normalizarEstadoPago(status);
+    const pedido = parametroReal(searchParams.get('pedido')) || parametroReal(searchParams.get('external_reference')) || localStorage.getItem('pedidoPendientePago');
+    const paymentId = parametroReal(searchParams.get('payment_id')) || parametroReal(searchParams.get('collection_id'));
+    if (!estadoPago && !paymentId) return;
+
+    const etiquetaPedido = pedido ? ` del pedido #${pedido}` : '';
+    if (estadoPago === 'aprobado') setMensaje(`Pago aprobado${etiquetaPedido}.`);
+    if (estadoPago === 'pendiente') setMensaje(`Pago pendiente${etiquetaPedido}.`);
+    if (estadoPago === 'fallido') setMensaje(`El pago no fue completado${etiquetaPedido}.`);
+
+    if (isAuthenticated && (paymentId || (estadoPago === 'aprobado' && pedido))) {
+      api.post('/pagos/mercadopago/confirmar-retorno', {
+        payment_id: paymentId,
+        id_pedido: pedido,
+        estado_pago: estadoPago,
+      }, token)
+        .then(() => {
+          localStorage.removeItem('pedidoPendientePago');
+          cargarDatos();
+        })
+        .catch((err) => setMensaje(err.message));
+    }
+  }, [cargarDatos, isAuthenticated, searchParams, token]);
+
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   async function abrirPedido(idPedido) {
@@ -65,10 +94,10 @@ export default function Dashboard() {
   return (
     <main>
       <header className="topbar">
-        <Link className="brand" to="/">Yizer</Link>
+        <Link className="brand" to="/">YIZER</Link>
         <nav className="navlinks">
-          <Link to="/catalogo">Catalogo</Link>
-          <button className="link-button" onClick={logout}>Salir</button>
+          <Link to="/catalogo"><Icon name="bag" />Catalogo</Link>
+          <button className="link-button" onClick={logout}><Icon name="logout" />Salir</button>
         </nav>
       </header>
 
@@ -98,7 +127,7 @@ export default function Dashboard() {
                   <p className="eyebrow">Historial</p>
                   <h2>Mis pedidos</h2>
                 </div>
-                <Link className="button secondary" to="/catalogo">Nuevo pedido</Link>
+                <Link className="button secondary" to="/catalogo"><Icon name="plus" />Nuevo pedido</Link>
               </div>
               {!pedidos.length ? (
                 <p className="muted">Aun no tienes pedidos registrados.</p>
@@ -112,7 +141,7 @@ export default function Dashboard() {
                       </div>
                       <span className="status">{pedido.estado}</span>
                       <strong>${Number(pedido.total || 0).toFixed(2)}</strong>
-                      <button className="button secondary" onClick={() => abrirPedido(pedido.id_pedido)}>Detalle</button>
+                      <button className="button secondary" onClick={() => abrirPedido(pedido.id_pedido)}><Icon name="package" />Detalle</button>
                     </article>
                   ))}
                 </div>
@@ -139,7 +168,7 @@ export default function Dashboard() {
                 Nueva contrasena
                 <input name="password" type="password" minLength="6" />
               </label>
-              <button className="button primary">Actualizar perfil</button>
+              <button className="button primary"><Icon name="user" />Actualizar perfil</button>
             </form>
           )}
         </section>
@@ -156,6 +185,9 @@ export default function Dashboard() {
               <button className="link-button" onClick={() => setPedidoDetalle(null)}>Cerrar</button>
             </div>
             <p className="status">{pedidoDetalle.estado}</p>
+            {pedidoDetalle.notas && (
+              <p className="muted preserved-text">{pedidoDetalle.notas}</p>
+            )}
             <div className="list">
               {pedidoDetalle.detalles?.map((detalle) => (
                 <article className="saved-item order-detail-item" key={detalle.id_detalle}>
@@ -246,4 +278,16 @@ function limpiarVacios(objeto) {
   return Object.fromEntries(
     Object.entries(objeto).filter(([, valor]) => valor !== '' && valor !== undefined)
   );
+}
+
+function normalizarEstadoPago(status) {
+  if (status === 'aprobado' || status === 'approved') return 'aprobado';
+  if (status === 'pendiente' || status === 'pending' || status === 'in_process') return 'pendiente';
+  if (status === 'fallido' || status === 'rejected' || status === 'cancelled' || status === 'null') return 'fallido';
+  return '';
+}
+
+function parametroReal(valor) {
+  if (!valor || valor === 'null' || valor === 'undefined') return '';
+  return valor;
 }

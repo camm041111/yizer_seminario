@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Fugaz+One&display=swap");
+
 :root {
   font-family: Inter, Roboto, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #241316;
@@ -6,6 +8,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --yizer-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='none' stroke='%232fb461' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='.10'%3E%3Cpath d='M14 12c34 18 35 47 4 68 35-4 58 13 70 50'/%3E%3Cpath d='M62 16h48l-18 30H45Z'/%3E%3Cpath d='M136 8c25 18 22 44-9 78 39-11 62 6 69 42'/%3E%3Cpath d='M12 118h52l20 34H30Z'/%3E%3Cpath d='M122 132c-20 18-18 42 5 59 23-8 36-22 37-43'/%3E%3Cpath d='M172 18h34l-12 40h-40Z'/%3E%3Cpath d='M174 82c19 8 28 22 28 42-18-7-31-3-42 12'/%3E%3Cpath d='M62 180c-22-18-40-18-56 3'/%3E%3Cpath d='M92 82h42l-13 28H82Z'/%3E%3Cpath d='M98 178h38l-8 26H84Z'/%3E%3Cpath d='M186 166c-20 8-31 21-34 40h58'/%3E%3Cpath d='M20 32c7 24-1 42-18 54'/%3E%3Cpath d='M122 44c12 0 22 10 22 22s-10 22-22 22'/%3E%3Cpath d='M52 92c17 4 28 15 34 32'/%3E%3Cpath d='M150 110l34-8'/%3E%3Cpath d='M36 146c17 7 27 20 31 39'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 * {
@@ -22,8 +25,11 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
+    var(--yizer-pattern),
     radial-gradient(circle at top right, rgba(215, 25, 32, 0.08), transparent 34rem),
     linear-gradient(180deg, #fffafa 0%, #fff3f3 100%);
+  background-attachment: fixed;
+  background-size: 220px 220px, auto, auto;
 }
 
 button,

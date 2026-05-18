@@ -7,10 +7,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  AppBar,
-  Toolbar,
   IconButton,
-  Avatar,
   Typography,
   Button,
   Paper,
@@ -63,25 +60,17 @@ const DashboardLayout = () => {
   const drawerContent = (
     <>
       <Box sx={{ px: 3, py: 4 }}>
-        <Box
+        <Typography
+          variant="h3"
           sx={{
-            width: 52,
-            height: 52,
-            borderRadius: 2,
-            bgcolor: '#d71920',
             color: '#fff',
-            display: 'grid',
-            placeItems: 'center',
-            fontWeight: 900,
-            fontSize: 24,
-            mb: 2,
-            boxShadow: '0 14px 30px rgba(215, 25, 32, 0.28)',
+            fontFamily: '"Fugaz One", Inter, system-ui, sans-serif',
+            fontWeight: 400,
+            lineHeight: 0.95,
+            fontSize: { xs: '2.25rem', md: '2.65rem' },
           }}
         >
-          Y
-        </Box>
-        <Typography variant="h5" sx={{ color: '#fff', lineHeight: 1 }}>
-          Yizer
+          YIZER
         </Typography>
         <Typography variant="caption" sx={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#ffd7d9', mt: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Panel administrador
@@ -154,7 +143,16 @@ const DashboardLayout = () => {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff7f7' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: '100vh',
+        bgcolor: '#fff7f7',
+        backgroundImage: 'var(--yizer-pattern), radial-gradient(circle at top right, rgba(215, 25, 32, 0.08), transparent 34rem), linear-gradient(180deg, #fffafa 0%, #fff3f3 100%)',
+        backgroundAttachment: 'fixed',
+        backgroundSize: '220px 220px, auto, auto',
+      }}
+    >
       {/* Sidebar */}
       <Drawer
         variant={desktop ? 'permanent' : 'temporary'}
@@ -178,55 +176,28 @@ const DashboardLayout = () => {
 
       {/* Main Content */}
       <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: { md: `calc(100% - ${drawerWidth}px)` } }}>
-        {/* Header */}
-        <AppBar
-          position="sticky"
-          elevation={0}
+        <IconButton
+          onClick={() => setMobileOpen(true)}
           sx={{
-            bgcolor: 'rgba(255, 250, 250, 0.86)',
-            color: '#241316',
-            backdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(139, 30, 36, 0.12)',
-            boxShadow: '0 8px 28px rgba(98, 18, 24, 0.06)',
+            display: { xs: 'inline-flex', md: 'none' },
+            position: 'fixed',
+            top: 14,
+            left: 14,
             zIndex: 30,
+            color: '#a70f16',
+            bgcolor: 'rgba(255, 250, 250, 0.92)',
+            border: '1px solid rgba(139, 30, 36, 0.12)',
+            boxShadow: '0 8px 24px rgba(98, 18, 24, 0.12)',
+            '&:hover': {
+              bgcolor: '#fff',
+            },
           }}
         >
-          <Toolbar sx={{ justifyContent: 'space-between', gap: 2, minHeight: 72 }}>
-            <IconButton
-              onClick={() => setMobileOpen(true)}
-              sx={{ display: { xs: 'inline-flex', md: 'none' }, color: '#a70f16' }}
-            >
-              <MenuIcon />
-            </IconButton>
-
-            <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: '0.78rem', fontWeight: 800, color: '#a70f16', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Panel administrador
-              </Typography>
-              <Typography variant="h6" sx={{ color: '#241316', lineHeight: 1.2 }}>
-                Gestión Yizer
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, ml: { xs: 0, md: 3 } }}>
-              <Avatar
-                src={user?.avatar}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: '#d71920',
-                  border: '2px solid #ffd7d9',
-                  fontWeight: 800,
-                }}
-              >
-                {(user?.nombre_completo || user?.email || 'A').charAt(0).toUpperCase()}
-              </Avatar>
-            </Box>
-          </Toolbar>
-        </AppBar>
+          <MenuIcon />
+        </IconButton>
 
         {/* Page Content */}
-        <Box sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4, lg: 5 } }}>
+        <Box sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4, lg: 5 }, pt: { xs: 8, md: 4, lg: 5 } }}>
           <Outlet />
         </Box>
       </Box>

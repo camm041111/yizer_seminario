@@ -1,6 +1,11 @@
 const db = require('../config/db');
 
 const ESTADOS = new Set(['pendiente', 'en_proceso', 'enviado', 'entregado', 'cancelado']);
+const ESTADOS_CON_STOCK_DESCONTADO = new Set(['pendiente', 'en_proceso', 'enviado', 'entregado']);
+
+function tieneStockDescontado(estado) {
+  return ESTADOS_CON_STOCK_DESCONTADO.has(estado);
+}
 
 async function ajustarStock(conn, idVariante, cantidad) {
   const delta = Number(cantidad);
@@ -195,8 +200,7 @@ async function crear(req, res) {
         await conn.rollback();
         return res.status(400).json({ error: `Variante ${linea.id_variante} no existe` });
       }
-      const stockOk = await ajustarStock(conn, linea.id_variante, -Number(linea.cantidad));
-      if (!stockOk) {
+      if (Number(variante.stock) < Number(linea.cantidad)) {
         await conn.rollback();
         return res.status(400).json({
           error: `Stock insuficiente para ${variante.producto_nombre} ${variante.color}/${variante.talla}. Disponible: ${variante.stock}`,
@@ -214,6 +218,10 @@ async function crear(req, res) {
           linea.precio_unitario,
         ]
       );
+    }
+
+    if (tieneStockDescontado(estadoFinal)) {
+      await ajustarStockPedido(conn, idPedido, -1);
     }
 
     const [sumRows] = await conn.query(
@@ -285,9 +293,11 @@ async function actualizar(req, res) {
 
     const estadoAnterior = prevRows[0].estado;
     if (estado !== undefined && estado !== estadoAnterior) {
-      if (estado === 'cancelado' && estadoAnterior !== 'cancelado') {
+      const antesTeniaStock = tieneStockDescontado(estadoAnterior);
+      const ahoraTieneStock = tieneStockDescontado(estado);
+      if (antesTeniaStock && !ahoraTieneStock) {
         await ajustarStockPedido(conn, req.params.id, 1);
-      } else if (estadoAnterior === 'cancelado' && estado !== 'cancelado') {
+      } else if (!antesTeniaStock && ahoraTieneStock) {
         await ajustarStockPedido(conn, req.params.id, -1);
       }
     }
@@ -351,7 +361,7 @@ async function agregarDetalle(req, res) {
       await conn.rollback();
       return res.status(400).json({ error: 'Variante no existe' });
     }
-    if (p[0].estado !== 'cancelado') {
+    if (tieneStockDescontado(p[0].estado)) {
       const stockOk = await ajustarStock(conn, id_variante, -Number(cantidad));
       if (!stockOk) {
         await conn.rollback();
@@ -442,7 +452,7 @@ async function actualizarDetalle(req, res) {
       }
     }
 
-    if (cantidad !== undefined && det[0].estado !== 'cancelado') {
+    if (cantidad !== undefined && tieneStockDescontado(det[0].estado)) {
       const diferencia = Number(cantidad) - Number(det[0].cantidad);
       if (diferencia !== 0) {
         const stockOk = await ajustarStock(conn, det[0].id_variante, -diferencia);
@@ -503,7 +513,7 @@ async function eliminarDetalle(req, res) {
       return res.status(404).json({ error: 'Detalle no encontrado' });
     }
     const idPedido = det[0].id_pedido;
-    if (det[0].estado !== 'cancelado') {
+    if (tieneStockDescontado(det[0].estado)) {
       await ajustarStock(conn, det[0].id_variante, Number(det[0].cantidad));
     }
     await conn.query('DELETE FROM detalle_pedidos WHERE id_detalle = ?', [req.params.idDetalle]);
@@ -540,7 +550,7 @@ async function eliminar(req, res) {
       await conn.rollback();
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
-    if (pedido[0].estado !== 'cancelado') {
+    if (tieneStockDescontado(pedido[0].estado)) {
       await ajustarStockPedido(conn, req.params.id, 1);
     }
     const [result] = await conn.query('DELETE FROM pedidos WHERE id_pedido = ?', [req.params.id]);
@@ -556,6 +566,44 @@ async function eliminar(req, res) {
   }
 }
 
+async function marcarPagado(idPedido, notaPago) {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [pedidos] = await conn.query(
+      'SELECT id_pedido, estado, notas FROM pedidos WHERE id_pedido = ? FOR UPDATE',
+      [idPedido]
+    );
+    const pedido = pedidos[0];
+    if (!pedido) {
+      await conn.rollback();
+      return false;
+    }
+
+    if (!tieneStockDescontado(pedido.estado)) {
+      await ajustarStockPedido(conn, idPedido, -1);
+    }
+
+    const notasActuales = pedido.notas || '';
+    const notas = notaPago && !notasActuales.includes(notaPago)
+      ? [notasActuales, notaPago].filter(Boolean).join('\n')
+      : notasActuales;
+
+    await conn.query(
+      'UPDATE pedidos SET estado = ?, notas = ? WHERE id_pedido = ?',
+      ['en_proceso', notas, idPedido]
+    );
+
+    await conn.commit();
+    return true;
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
 module.exports = {
   listar,
   obtenerPorId,
@@ -565,4 +613,5 @@ module.exports = {
   actualizarDetalle,
   eliminarDetalle,
   eliminar,
+  marcarPagado,
 };

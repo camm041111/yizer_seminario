@@ -1,12 +1,27 @@
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Box, Alert, Paper } from '@mui/material';
+import {
+  TextField,
+  Button,
+  Container,
+  Typography,
+  Box,
+  Alert,
+  Paper,
+  IconButton,
+  InputAdornment,
+} from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Lock as LockIcon } from '@mui/icons-material';
+import {
+  Lock as LockIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+} from '@mui/icons-material';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -28,9 +43,9 @@ const Login = () => {
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
-        background:
-          'linear-gradient(135deg, rgba(143, 16, 23, 0.94), rgba(215, 25, 32, 0.86)), url(/favicon.svg)',
-        backgroundSize: 'cover',
+        backgroundImage:
+          'linear-gradient(135deg, rgba(143, 16, 23, 0.92), rgba(215, 25, 32, 0.82)), var(--yizer-pattern)',
+        backgroundSize: 'auto, 220px 220px',
       }}
     >
       <Container maxWidth="sm">
@@ -65,8 +80,14 @@ const Login = () => {
             >
               <LockIcon fontSize="medium" />
             </Box>
-            <Typography variant="h4">
-              Panel Yizer
+            <Typography
+              variant="h4"
+              sx={{
+                fontFamily: '"Fugaz One", Inter, system-ui, sans-serif',
+                fontWeight: 400,
+              }}
+            >
+              YIZER
             </Typography>
             <Typography color="text.secondary" sx={{ mt: 1 }}>
               Acceso para administradores
@@ -85,10 +106,25 @@ const Login = () => {
         <TextField
           fullWidth
           label="Password"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                    onClick={() => setShowPassword((current) => !current)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
         />
 
         {error && <Alert severity="error">{error}</Alert>}
